@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hark — a player for long recordings</title>
+<meta name="description" content="An Android player for long recordings from a single folder. It remembers where you stopped in every file. Built entirely by AI, in conversation. No human wrote a line.">
+<meta property="og:title" content="Hark">
+<meta property="og:description" content="A player for long recordings. It remembers where you stopped. Built entirely by AI, in conversation.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://shumtugle.github.io/hark/icon.png">
+<link rel="icon" href="icon.png">
+<style>
+  :root{
+    --bg:#171512; --surface:#1F1D19; --raise:#2A2723;
+    --text:#E8E2D6; --dim:#8C877C; --off:#57534B;
+    --line:#33302B; --amber:#D49A3A; --amber-dk:#6B5426;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;color:var(--text);background:var(--bg);
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    font-size:17px;line-height:1.62;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(212,154,58,.028) 0 1px, transparent 1px 4px);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:840px;margin:0 auto;padding:0 22px}
+
+  .top{display:flex;align-items:center;gap:12px;padding:22px 0 6px;font-size:13.5px;color:var(--dim);letter-spacing:.04em}
+  .top img{width:34px;height:34px;border-radius:8px}
+  .top b{color:var(--text)}
+
+  header{padding:26px 0 46px;display:grid;grid-template-columns:1fr;gap:26px}
+  @media (min-width:760px){ header{grid-template-columns:1.1fr .9fr;align-items:center;gap:38px} }
+  h1{
+    font-size:62px;line-height:1;margin:0 0 14px;font-weight:800;
+    letter-spacing:.10em;text-transform:uppercase;color:var(--amber);
+  }
+  .lede{font-size:20px;margin:0 0 10px}
+  .sub{color:var(--dim);margin:0 0 22px}
+  .hero{display:block;margin:0 auto;border:1px solid var(--line);border-radius:14px;
+        max-width:300px;width:100%;height:auto;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+  @media (min-width:760px){ .hero{max-width:320px} }
+
+  .cta{display:flex;flex-wrap:wrap;gap:11px;margin:0 0 12px}
+  .btn{
+    display:inline-block;text-decoration:none;font-weight:700;font-size:16px;
+    padding:13px 22px;border-radius:9px;border:1px solid var(--amber);
+    background:var(--amber);color:#17150F;
+  }
+  .btn.ghost{background:none;color:var(--amber);border-color:var(--line)}
+  .fine{font-size:13.5px;color:var(--dim);margin:0}
+
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);margin:0 0 6px}
+  h2{font-size:30px;line-height:1.2;margin:0 0 18px;font-weight:800;color:var(--amber);letter-spacing:.01em}
+  h3{font-size:17px;margin:0 0 4px;font-weight:700;color:var(--text)}
+  p{margin:0 0 14px}
+  .grid{display:grid;gap:20px 26px;grid-template-columns:1fr}
+  @media (min-width:640px){ .grid.two{grid-template-columns:1fr 1fr} }
+  .grid p{margin:0;color:var(--dim);font-size:15.5px}
+
+  .rules{list-style:none;padding:0;margin:0}
+  .rules li{padding:11px 0;border-bottom:1px solid var(--line);font-size:16px;color:var(--dim)}
+  .rules li:last-child{border-bottom:none}
+  .rules b{color:var(--text)}
+
+  pre{
+    background:var(--surface);color:#D8D0BF;border:1px solid var(--line);border-radius:8px;
+    padding:16px 18px;overflow:auto;font-size:13.5px;line-height:1.6;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.93em;color:var(--amber)}
+
+  .langs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+  .langs span{border:1px solid var(--line);border-radius:20px;padding:5px 13px;font-size:14px;color:var(--dim)}
+
+  footer{padding:34px 0 60px;border-top:1px solid var(--line);color:var(--dim);font-size:14px}
+  footer a{color:var(--amber)}
+  a{color:var(--amber)}
+  .ver{color:var(--off);font-size:12.5px;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <img src="icon.png" alt="Hark icon">
+    <span><b>Hark</b> — version 1.3.0 · Android 8.0+ · 78 kB</span>
+  </div>
+
+  <header>
+    <div>
+      <h1>Hark</h1>
+      <p class="lede">A player for long recordings from a single folder.</p>
+      <p class="sub">Two-hour lectures, audiobooks, recorded talks. It opens a folder, not a library — and it remembers where you stopped in every file.</p>
+      <div class="cta">
+        <a class="btn" href="hark-1.3.0.apk">Download APK</a>
+        <a class="btn ghost" href="https://github.com/Shumtugle/hark">Source on GitHub</a>
+      </div>
+      <p class="fine">No permissions beyond the folder you grant yourself. No internet, no accounts, no ads, no tracking.</p>
+    </div>
+    <img class="hero" src="screen.png" alt="The Hark screen: folder listing and playback panel">
+  </header>
+
+  <section>
+    <p class="eyebrow">The idea</p>
+    <h2>A folder, not a library</h2>
+    <p>Most players want to be catalogues. They scan your storage, build a database, sort by artist and album, and show you a wall of cover art. That is a fine thing for music and a poor thing for a two-hour lecture with no tags at all.</p>
+    <p>Hark does the opposite. It reads one folder in a single query, shows the files as they lie on disk, and plays them in order. There is no library, no index, no scan. What you put in the folder is what you see.</p>
+    <ul class="rules">
+      <li><b>Position over everything.</b> The place inside each file is remembered separately, keyed by document id rather than "last track". Return after a week and you resume exactly there.</li>
+      <li><b>Five seconds back.</b> Resuming rewinds a little, so you hear the end of the previous sentence instead of the middle of a word.</li>
+      <li><b>MP4 by default.</b> Only m4a, m4b, mp4 and aac are shown. One chip switches to everything audible; the state resets to MP4 on every launch.</li>
+      <li><b>Nothing finishes itself.</b> No auto-resume when headphones come back, no playlists, no shuffle. The app does what you told it and stops.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="eyebrow">How it thinks</p>
+    <h2>The awkward parts, honestly</h2>
+
+    <div class="grid two">
+      <div>
+        <h3>A two-hour file breaks the scrub bar</h3>
+        <p>On a 1080-pixel screen, two hours means one pixel is roughly seven seconds. Precise seeking by drag is physically impossible, so there are three levels of access instead: fifteen- and thirty-second buttons, coarse dragging across the full height of the panel, and exact time entry on a long press of the digits.</p>
+      </div>
+      <div>
+        <h3>Length is fetched lazily</h3>
+        <p>Opening metadata for three hundred files at once is several seconds of frozen screen. Hark reads each duration as its row is drawn, in the background, and caches it. Sorting by length therefore settles a second after the folder opens — the known files first, the rest arriving.</p>
+      </div>
+      <div>
+        <h3>Firmware lies about MIME types</h3>
+        <p>Some devices return <code>application/octet-stream</code> instead of an honest audio type. A filter trusting MIME alone would swallow half the folder, so both the extension and the type are checked, and either one is enough.</p>
+      </div>
+      <div>
+        <h3>Android does not pause for headphones</h3>
+        <p>Pulling the jack does not stop playback — the system simply moves the sound to the speaker, and your lecture continues out loud on the bus. Hark listens for the system notice and pauses itself. Resuming is manual: headphones plugged back in should not start the sound.</p>
+      </div>
+      <div>
+        <h3>Speed can start the sound by itself</h3>
+        <p>On some devices setting playback speed on a paused player silently resumes it. Hark records the state before the change and restores it after, and writes the incident into the inquest log.</p>
+      </div>
+      <div>
+        <h3>Files disappear</h3>
+        <p>A file deleted while the app slept would leave a dead "Continue" row. Before drawing it, Hark checks that the file is still there, and quietly forgets it if not. A file deleted <em>during</em> playback keeps playing to the end — the descriptor is still open.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">The screen</p>
+    <h2>What the interface says without words</h2>
+    <p>A stripe under a file name shows how far in you stopped. Finished files dim to a quieter grey. The file currently playing gets a thin vertical rule on its left edge, not a filled highlight: a block shouts, a rule speaks.</p>
+    <p>The palette is one accent and three greys. Amber, the colour of a valve indicator — it does not burn in the dark and it separates Hark from the blue of every other player. No more than three elements carry the accent at once; a fourth would stop it being an accent.</p>
+    <p>The background is not black but warm graphite, and the text is not white but bone. Pure black against pure white draws a hard edge that hurts at night.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Languages</p>
+    <h2>Fifteen, including right-to-left</h2>
+    <div class="langs">
+      <span>🌐 Auto</span><span>🇬🇧 English</span><span>🇷🇺 Русский</span><span>🇫🇮 Suomi</span>
+      <span>🇸🇪 Svenska</span><span>🇩🇪 Deutsch</span><span>🇫🇷 Français</span><span>🇪🇸 Español</span>
+      <span>🇺🇦 Українська</span><span>🇨🇳 中文</span><span>🇸🇦 العربية</span><span>🇮🇱 עברית</span>
+      <span>🇵🇰 اردو</span><span>🇰🇬 Кыргызча</span><span>🇰🇿 Қазақша</span>
+    </div>
+    <p style="margin-top:14px">Arabic, Hebrew and Urdu lay out right to left. By default the app follows the system language and falls back to English for anything it does not know.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Built</p>
+    <h2>No Android Studio, no Gradle</h2>
+    <p>Every line of this application was generated by AI — <b>Claude Opus 5</b> — through plain conversation. Not a single line was written by a human hand. The owner of the repository described what he wanted, tested each build on a phone, and reported what broke.</p>
+    <p>The toolchain is deliberately bare: <code>javac</code> against a platform stub, <code>dx</code> for dex, <code>aapt</code> for resources, <code>zipalign</code> and <code>apksigner</code> to close it. No IDE, no build system, no dependencies at all — not one external library. The interface is built in code; there is not a single layout XML in the project.</p>
+    <pre>aapt package -f -m -J gen -M AndroidManifest.xml -S res -I android.jar -F base.ap_
+javac -encoding UTF-8 --release 8 -classpath android.jar -d cls $(find src gen -name "*.java")
+dx --dex --min-sdk-version=26 --output=classes.dex cls
+zip base.ap_ classes.dex && zipalign -f 4 base.ap_ aligned.apk
+apksigner sign --ks shumtugle.keystore --out hark-1.3.0.apk aligned.apk</pre>
+    <p class="fine">One honest scar worth recording: the first build crashed instantly. <code>dx</code> is old enough to leave <code>invoke-custom</code> instructions in the bytecode, asking the runtime for <code>LambdaMetafactory</code> — a class Android does not have. Modern tooling always desugars lambdas for exactly this reason. All forty-seven of them were rewritten as anonymous classes by hand.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">Access</p>
+    <h2>What it can and cannot reach</h2>
+    <p>Hark asks for one thing: the folder, chosen by you, once, through the system picker. Nothing else is readable to it. It has no internet permission at all, so it cannot phone home even if it wanted to.</p>
+    <p>The remaining permissions are the mechanics of playing sound: a foreground service so the audio survives leaving the app, a notification to control it, and a wake lock while sound is actually running.</p>
+    <p>No accounts. No analytics. No advertising identifiers. Nothing is uploaded, because there is nowhere for it to go.</p>
+  </section>
+
+  <footer>
+    <p>Logic and code: <a href="https://claude.ai">claude.ai</a> — Claude Opus 5<br>
+    Source: <a href="https://github.com/Shumtugle/hark">github.com/Shumtugle/hark</a><br>
+    Licence: MIT</p>
+    <p class="ver">generated by AI · Claude Opus 5 · v1.3.0</p>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+*.keystore
+*.jks
+.pw*
+keys/
+gen/
+cls/
+classes.dex
+base.ap_
+unsigned.zip
+aligned.apk
+android.jar
+sdk/
