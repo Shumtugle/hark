@@ -88,7 +88,7 @@
 
   <div class="top">
     <img src="icon.png" alt="Hark icon">
-    <span><b>Hark</b> — version 1.3.0 · Android 8.0+ · 78 kB</span>
+    <span><b>Hark</b> — version 1.9.0 · Android 8.0+ · 102 kB</span>
   </div>
 
   <header>
@@ -97,7 +97,7 @@
       <p class="lede">A player for long recordings from a single folder.</p>
       <p class="sub">Two-hour lectures, audiobooks, recorded talks. It opens a folder, not a library — and it remembers where you stopped in every file.</p>
       <div class="cta">
-        <a class="btn" href="hark-1.3.0.apk">Download APK</a>
+        <a class="btn" href="hark-1.9.0.apk">Download APK</a>
         <a class="btn ghost" href="https://github.com/Shumtugle/hark">Source on GitHub</a>
       </div>
       <p class="fine">No permissions beyond the folder you grant yourself. No internet, no accounts, no ads, no tracking.</p>
@@ -114,6 +114,7 @@
       <li><b>Position over everything.</b> The place inside each file is remembered separately, keyed by document id rather than "last track". Return after a week and you resume exactly there.</li>
       <li><b>Five seconds back.</b> Resuming rewinds a little, so you hear the end of the previous sentence instead of the middle of a word.</li>
       <li><b>MP4 by default.</b> Only m4a, m4b, mp4 and aac are shown. One chip switches to everything audible; the state resets to MP4 on every launch.</li>
+      <li><b>The filter is remembered.</b> Whether you left it on MP4 or on everything, it comes back that way — and that can be switched off in settings.</li>
       <li><b>Nothing finishes itself.</b> No auto-resume when headphones come back, no playlists, no shuffle. The app does what you told it and stops.</li>
     </ul>
   </section>
@@ -153,9 +154,27 @@
   <section>
     <p class="eyebrow">The screen</p>
     <h2>What the interface says without words</h2>
+    <h3>The full-screen panel</h3>
+    <p>Tapping the bottom panel expands it: speed on the left, sleep timer on the right, fifteen and thirty second jumps around the play button. The large digits are the position; a long press on them opens exact entry by hours, minutes and seconds — the only honest way into the middle of a two-hour recording. Dragging the bar raises a large plate above your finger showing where you are heading.</p>
+    <p>Speed and the sleep timer are mirrored on the main screen, flanking the transport buttons, so the common case needs no expanding at all.</p>
     <p>A stripe under a file name shows how far in you stopped. Finished files dim to a quieter grey. The file currently playing gets a thin vertical rule on its left edge, not a filled highlight: a block shouts, a rule speaks.</p>
     <p>The palette is one accent and three greys. Amber, the colour of a valve indicator — it does not burn in the dark and it separates Hark from the blue of every other player. No more than three elements carry the accent at once; a fourth would stop it being an accent.</p>
     <p>The background is not black but warm graphite, and the text is not white but bone. Pure black against pure white draws a hard edge that hurts at night.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow">On the home screen</p>
+    <h2>A widget that can disappear</h2>
+    <p>File name, folder, position bar, times, and five buttons: previous, back fifteen, play, forward thirty, next. Speed sits on the right and cycles on a tap without opening anything. Tapping the name or the background opens Hark on the folder you were in.</p>
+    <p>The buttons work even when Android has evicted the app from memory: the player raises itself, reads the last file and position from storage, and carries on from the same second.</p>
+    <p>Fill and frame are separate layers. The fill dials down through five steps to nothing at all, leaving only a thin rounded outline with the wallpaper showing through — while the frame always stays. Without it the contents read as scattered across the desktop rather than as one object.</p>
+
+    <section style="border:none;padding:0">
+      <p class="eyebrow" style="margin-top:22px">Navigation</p>
+      <h2>Everything in one scrolling row</h2>
+      <p>One line holds everything used constantly: back arrow, folder name, the MP4 filter, and a star for bookmarks. Everything needed occasionally lives behind the logo — sorting, history, folder picker, settings, help. Five elements, no more.</p>
+      <p><b>Bookmarks</b> hold up to twenty favourite folders, and each remembers the volume it sits on — a folder on a memory card is bookmarked alongside internal storage, and Hark switches trees on the way. The star glows amber when the current folder is already saved. For someone keeping lectures in one folder and audiobooks in another, this is the whole navigation model.</p>
+    </section>
   </section>
 
   <section>
@@ -179,7 +198,7 @@
 javac -encoding UTF-8 --release 8 -classpath android.jar -d cls $(find src gen -name "*.java")
 dx --dex --min-sdk-version=26 --output=classes.dex cls
 zip base.ap_ classes.dex && zipalign -f 4 base.ap_ aligned.apk
-apksigner sign --ks shumtugle.keystore --out hark-1.3.0.apk aligned.apk</pre>
+apksigner sign --ks shumtugle.keystore --out hark-1.9.0.apk aligned.apk</pre>
     <p class="fine">One honest scar worth recording: the first build crashed instantly. <code>dx</code> is old enough to leave <code>invoke-custom</code> instructions in the bytecode, asking the runtime for <code>LambdaMetafactory</code> — a class Android does not have. Modern tooling always desugars lambdas for exactly this reason. All forty-seven of them were rewritten as anonymous classes by hand.</p>
   </section>
 
@@ -195,7 +214,7 @@ apksigner sign --ks shumtugle.keystore --out hark-1.3.0.apk aligned.apk</pre>
     <p>Logic and code: <a href="https://claude.ai">claude.ai</a> — Claude Opus 5<br>
     Source: <a href="https://github.com/Shumtugle/hark">github.com/Shumtugle/hark</a><br>
     Licence: MIT</p>
-    <p class="ver">generated by AI · Claude Opus 5 · v1.3.0</p>
+    <p class="ver">generated by AI · Claude Opus 5 · v1.9.0</p>
   </footer>
 
 </div>
