@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/w_bg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_fill"
+        android:contentDescription="@string/app_name"/>
+
+    <ImageView
+        android:id="@+id/w_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:src="@drawable/widget_frame"
+        android:contentDescription="@string/app_name"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:id="@+id/w_root"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/w_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="16sp"
+                    android:textColor="#E8E2D6"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="@string/app_name"/>
+
+                <LinearLayout
+                    android:id="@+id/w_phones"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:layout_marginLeft="10dp"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:paddingLeft="11dp"
+                    android:paddingRight="11dp"
+                    android:background="@drawable/widget_chip"
+                    android:visibility="gone">
+
+                    <ImageView android:id="@+id/w_phones_icon"
+                        android:layout_width="13dp" android:layout_height="13dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/w_bt"
+                        android:contentDescription="@string/app_name"/>
+
+                    <TextView android:id="@+id/w_phones_pct"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#D49A3A"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/w_folder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="#A39D91"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:paddingTop="2dp"/>
+
+            <ProgressBar
+                android:id="@+id/w_bar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_marginTop="10dp"
+                android:max="1000"
+                android:progressTint="#D49A3A"
+                android:progressBackgroundTint="#6B5426"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingTop="3dp">
+
+                <TextView
+                    android:id="@+id/w_pos"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textSize="11sp"
+                    android:textColor="#8C877C"
+                    android:fontFamily="monospace"/>
+
+                <TextView
+                    android:id="@+id/w_dur"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textColor="#8C877C"
+                    android:fontFamily="monospace"/>
+            </LinearLayout>
+
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="4dp">
+
+                <ImageView android:id="@+id/w_prev"
+                    android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:paddingTop="8dp" android:paddingBottom="8dp"
+                    android:scaleType="fitStart"
+                    android:src="@drawable/w_prev"
+                    android:contentDescription="@string/app_name"/>
+
+                <ImageView android:id="@+id/w_back"
+                    android:layout_width="0dp" android:layout_weight="1.2"
+                    android:layout_height="40dp"
+                    android:paddingTop="4dp" android:paddingBottom="4dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/w_back"
+                    android:contentDescription="@string/app_name"/>
+
+                <FrameLayout
+                    android:id="@+id/w_play_zone"
+                    android:layout_width="0dp" android:layout_weight="1.7"
+                    android:layout_height="40dp">
+
+                    <ImageView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="fitXY"
+                        android:src="@drawable/widget_capsule"
+                        android:contentDescription="@string/app_name"/>
+
+                    <ImageView android:id="@+id/w_play"
+                        android:layout_width="30dp" android:layout_height="30dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/w_play"
+                        android:contentDescription="@string/app_name"/>
+                </FrameLayout>
+
+                <ImageView android:id="@+id/w_fwd"
+                    android:layout_width="0dp" android:layout_weight="1.2"
+                    android:layout_height="40dp"
+                    android:paddingTop="4dp" android:paddingBottom="4dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/w_fwd"
+                    android:contentDescription="@string/app_name"/>
+
+                <ImageView android:id="@+id/w_next"
+                    android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_height="40dp"
+                    android:paddingTop="8dp" android:paddingBottom="8dp"
+                    android:scaleType="fitEnd"
+                    android:src="@drawable/w_next"
+                    android:contentDescription="@string/app_name"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        
+        <ImageView
+            android:id="@+id/w_art"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="14dp"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="7dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:visibility="gone"
+            android:contentDescription="@string/app_name"/>
+    </LinearLayout>
+</FrameLayout>

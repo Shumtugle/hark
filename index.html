@@ -88,7 +88,7 @@
 
   <div class="top">
     <img src="icon.png" alt="Hark icon">
-    <span><b>Hark</b> — version 1.9.0 · Android 8.0+ · 102 kB</span>
+    <span><b>Hark</b> — version 2.9.7 · Android 8.0+ · 118 kB</span>
   </div>
 
   <header>
@@ -97,7 +97,7 @@
       <p class="lede">A player for long recordings from a single folder.</p>
       <p class="sub">Two-hour lectures, audiobooks, recorded talks. It opens a folder, not a library — and it remembers where you stopped in every file.</p>
       <div class="cta">
-        <a class="btn" href="hark-1.9.0.apk">Download APK</a>
+        <a class="btn" href="hark-2.9.7.apk">Download APK</a>
         <a class="btn ghost" href="https://github.com/Shumtugle/hark">Source on GitHub</a>
       </div>
       <p class="fine">No permissions beyond the folder you grant yourself. No internet, no accounts, no ads, no tracking.</p>
@@ -113,8 +113,9 @@
     <ul class="rules">
       <li><b>Position over everything.</b> The place inside each file is remembered separately, keyed by document id rather than "last track". Return after a week and you resume exactly there.</li>
       <li><b>Five seconds back.</b> Resuming rewinds a little, so you hear the end of the previous sentence instead of the middle of a word.</li>
-      <li><b>MP4 by default.</b> Only m4a, m4b, mp4 and aac are shown. One chip switches to everything audible; the state resets to MP4 on every launch.</li>
+      <li><b>Everything audible by default.</b> One chip narrows the list to the MP4 family — m4a, m4b, mp4, aac — and the choice is remembered. When a filter hides every file, the empty screen says so and offers to lift it.</li>
       <li><b>The filter is remembered.</b> Whether you left it on MP4 or on everything, it comes back that way — and that can be switched off in settings.</li>
+      <li><b>Rewind on resume.</b> Speech breaks mid-sentence when you pause; resuming from the exact millisecond gives you nothing. Playback steps back three and a half seconds, adjustable or off.</li>
       <li><b>Nothing finishes itself.</b> No auto-resume when headphones come back, no playlists, no shuffle. The app does what you told it and stops.</li>
     </ul>
   </section>
@@ -166,6 +167,7 @@
     <p class="eyebrow">On the home screen</p>
     <h2>A widget that can disappear</h2>
     <p>File name, folder, position bar, times, and five buttons: previous, back fifteen, play, forward thirty, next. Speed sits on the right and cycles on a tap without opening anything. Tapping the name or the background opens Hark on the folder you were in.</p>
+    <p><b>Cover art</b> holds the right edge. Artwork embedded in the file comes first; failing that, an image lying in the same folder, where <code>cover</code>, <code>folder</code>, <code>front</code> and <code>album</code> outrank a stray screenshot. The second path matters more: a book cut into forty chapters usually carries no tags at all, yet the cover sits right there as a file. With neither, the square disappears and the rest takes its place.</p>
     <p>The buttons work even when Android has evicted the app from memory: the player raises itself, reads the last file and position from storage, and carries on from the same second.</p>
     <p>Fill and frame are separate layers. The fill dials down through five steps to nothing at all, leaving only a thin rounded outline with the wallpaper showing through — while the frame always stays. Without it the contents read as scattered across the desktop rather than as one object.</p>
 
@@ -175,6 +177,14 @@
       <p>One line holds everything used constantly: back arrow, folder name, the MP4 filter, and a star for bookmarks. Everything needed occasionally lives behind the logo — sorting, history, folder picker, settings, help. Five elements, no more.</p>
       <p><b>Bookmarks</b> hold up to twenty favourite folders, and each remembers the volume it sits on — a folder on a memory card is bookmarked alongside internal storage, and Hark switches trees on the way. The star glows amber when the current folder is already saved. For someone keeping lectures in one folder and audiobooks in another, this is the whole navigation model.</p>
     </section>
+  </section>
+
+  <section>
+    <p class="eyebrow">Small things that took the longest</p>
+    <h2>Speech is not music</h2>
+    <p>Pausing breaks a sentence in half, so resuming from the exact millisecond gives you nothing. Playback steps back three and a half seconds by default — adjustable, or off. It is one line of code and the single change that most altered how the app feels.</p>
+    <p>When sound leaves for a headset, a mark appears in the header and in the widget: amber for Bluetooth, grey for a cable, with the charge beside it. Android does not expose that charge publicly — the method is hidden and Hark reaches it sideways, while some headsets never report it at all. Then the mark stands alone, which is the honest limit rather than a fault.</p>
+    <p>A crash used to take its own explanation with it. Now the stack of the last one is written to a file, survives the death of the process, and is waiting in the inquest on the next launch.</p>
   </section>
 
   <section>
@@ -198,7 +208,7 @@
 javac -encoding UTF-8 --release 8 -classpath android.jar -d cls $(find src gen -name "*.java")
 dx --dex --min-sdk-version=26 --output=classes.dex cls
 zip base.ap_ classes.dex && zipalign -f 4 base.ap_ aligned.apk
-apksigner sign --ks shumtugle.keystore --out hark-1.9.0.apk aligned.apk</pre>
+apksigner sign --ks shumtugle.keystore --out hark-2.9.7.apk aligned.apk</pre>
     <p class="fine">One honest scar worth recording: the first build crashed instantly. <code>dx</code> is old enough to leave <code>invoke-custom</code> instructions in the bytecode, asking the runtime for <code>LambdaMetafactory</code> — a class Android does not have. Modern tooling always desugars lambdas for exactly this reason. All forty-seven of them were rewritten as anonymous classes by hand.</p>
   </section>
 
@@ -214,7 +224,7 @@ apksigner sign --ks shumtugle.keystore --out hark-1.9.0.apk aligned.apk</pre>
     <p>Logic and code: <a href="https://claude.ai">claude.ai</a> — Claude Opus 5<br>
     Source: <a href="https://github.com/Shumtugle/hark">github.com/Shumtugle/hark</a><br>
     Licence: MIT</p>
-    <p class="ver">generated by AI · Claude Opus 5 · v1.9.0</p>
+    <p class="ver">generated by AI · Claude Opus 5 · v2.9.7</p>
   </footer>
 
 </div>

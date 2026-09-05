@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="HarkTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#171512</item>
+        <item name="android:statusBarColor">#1F1D19</item>
+        <item name="android:navigationBarColor">#1F1D19</item>
+        <item name="android:colorAccent">#D49A3A</item>
+    </style>
+</resources>
