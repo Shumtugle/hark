@@ -186,10 +186,17 @@ public class Rows extends BaseAdapter {
             h.title.setTextColor(Ui.ACCENT);
             h.title.setTypeface(Typeface.DEFAULT_BOLD);
             h.root.setBackgroundColor(0x14D49A3A);
+        } else if (done) {
+
+            h.icon.setVisibility(View.VISIBLE);
+            h.icon.setImageDrawable(new Icon(Icon.DONE, Ui.TEXT_OFF));
+            h.title.setTextColor(Ui.TEXT_OFF);
+            h.title.setTypeface(Typeface.DEFAULT);
+            h.root.setBackgroundColor(0);
         } else {
             h.icon.setVisibility(View.GONE);
             h.icon.setImageDrawable(null);
-            h.title.setTextColor(done ? Ui.TEXT_OFF : Ui.TEXT);
+            h.title.setTextColor(Ui.TEXT);
             h.title.setTypeface(Typeface.DEFAULT);
             h.root.setBackgroundColor(0);
         }

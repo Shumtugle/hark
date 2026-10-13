@@ -88,7 +88,7 @@
 
   <div class="top">
     <img src="icon.png" alt="Hark icon">
-    <span><b>Hark</b> — version 2.9.7 · Android 8.0+ · 118 kB</span>
+    <span><b>Hark</b> — version 2.9.9 · Android 8.0+ · 122 kB</span>
   </div>
 
   <header>
@@ -97,7 +97,7 @@
       <p class="lede">A player for long recordings from a single folder.</p>
       <p class="sub">Two-hour lectures, audiobooks, recorded talks. It opens a folder, not a library — and it remembers where you stopped in every file.</p>
       <div class="cta">
-        <a class="btn" href="hark-2.9.7.apk">Download APK</a>
+        <a class="btn" href="hark-2.9.9.apk">Download APK</a>
         <a class="btn ghost" href="https://github.com/Shumtugle/hark">Source on GitHub</a>
       </div>
       <p class="fine">No permissions beyond the folder you grant yourself. No internet, no accounts, no ads, no tracking.</p>
@@ -116,6 +116,7 @@
       <li><b>Everything audible by default.</b> One chip narrows the list to the MP4 family — m4a, m4b, mp4, aac — and the choice is remembered. When a filter hides every file, the empty screen says so and offers to lift it.</li>
       <li><b>The filter is remembered.</b> Whether you left it on MP4 or on everything, it comes back that way — and that can be switched off in settings.</li>
       <li><b>Rewind on resume.</b> Speech breaks mid-sentence when you pause; resuming from the exact millisecond gives you nothing. Playback steps back three and a half seconds, adjustable or off.</li>
+      <li><b>Finished means finished.</b> A file that played to the end is marked as such the moment it ends, even in the background, gets a tick in the list, and starts from the beginning next time. The mark can be set or lifted by hand.</li>
       <li><b>Nothing finishes itself.</b> No auto-resume when headphones come back, no playlists, no shuffle. The app does what you told it and stops.</li>
     </ul>
   </section>
@@ -132,6 +133,10 @@
       <div>
         <h3>Length is fetched lazily</h3>
         <p>Opening metadata for three hundred files at once is several seconds of frozen screen. Hark reads each duration as its row is drawn, in the background, and caches it. Sorting by length therefore settles a second after the folder opens — the known files first, the rest arriving.</p>
+      </div>
+      <div>
+        <h3>Long AAC can play as silence</h3>
+        <p>On some phones the system hands long AAC to the audio processor, which then plays nothing: the clock runs, the speaker stays quiet. Starting at any speed other than exactly 1 turns that offload off. So m4a, m4b and aac at speed 1 start at 0.99x and get their speed back a second later; the ear cannot tell. Mp3 is left alone, because for it the offload is honest battery saving.</p>
       </div>
       <div>
         <h3>Firmware lies about MIME types</h3>
@@ -166,7 +171,7 @@
   <section>
     <p class="eyebrow">On the home screen</p>
     <h2>A widget that can disappear</h2>
-    <p>File name, folder, position bar, times, and five buttons: previous, back fifteen, play, forward thirty, next. Speed sits on the right and cycles on a tap without opening anything. Tapping the name or the background opens Hark on the folder you were in.</p>
+    <p>File name, folder, position bar, times, and five buttons: previous, back fifteen, play, forward thirty, next. A battery pill for the headset sits in the title line when the headset reports its charge, and disappears when it does not. Tapping the name or the background opens Hark on the folder you were in.</p>
     <p><b>Cover art</b> holds the right edge. Artwork embedded in the file comes first; failing that, an image lying in the same folder, where <code>cover</code>, <code>folder</code>, <code>front</code> and <code>album</code> outrank a stray screenshot. The second path matters more: a book cut into forty chapters usually carries no tags at all, yet the cover sits right there as a file. With neither, the square disappears and the rest takes its place.</p>
     <p>The buttons work even when Android has evicted the app from memory: the player raises itself, reads the last file and position from storage, and carries on from the same second.</p>
     <p>Fill and frame are separate layers. The fill dials down through five steps to nothing at all, leaving only a thin rounded outline with the wallpaper showing through — while the frame always stays. Without it the contents read as scattered across the desktop rather than as one object.</p>
@@ -208,7 +213,7 @@
 javac -encoding UTF-8 --release 8 -classpath android.jar -d cls $(find src gen -name "*.java")
 dx --dex --min-sdk-version=26 --output=classes.dex cls
 zip base.ap_ classes.dex && zipalign -f 4 base.ap_ aligned.apk
-apksigner sign --ks shumtugle.keystore --out hark-2.9.7.apk aligned.apk</pre>
+apksigner sign --ks shumtugle.keystore --out hark-2.9.9.apk aligned.apk</pre>
     <p class="fine">One honest scar worth recording: the first build crashed instantly. <code>dx</code> is old enough to leave <code>invoke-custom</code> instructions in the bytecode, asking the runtime for <code>LambdaMetafactory</code> — a class Android does not have. Modern tooling always desugars lambdas for exactly this reason. All forty-seven of them were rewritten as anonymous classes by hand.</p>
   </section>
 
@@ -224,7 +229,7 @@ apksigner sign --ks shumtugle.keystore --out hark-2.9.7.apk aligned.apk</pre>
     <p>Logic and code: <a href="https://claude.ai">claude.ai</a> — Claude Opus 5<br>
     Source: <a href="https://github.com/Shumtugle/hark">github.com/Shumtugle/hark</a><br>
     Licence: MIT</p>
-    <p class="ver">generated by AI · Claude Opus 5 · v2.9.7</p>
+    <p class="ver">generated by AI · Claude Opus 5 · v2.9.9</p>
   </footer>
 
 </div>

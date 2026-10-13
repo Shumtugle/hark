@@ -266,10 +266,23 @@ public class PlayerService extends Service
                 if (p > back) rawSeek(p - back);
             }
         }
+        boolean kick = needsKick();
         try {
             mp.setVolume(volume, volume);
+            if (kick) setSpeedRaw(KICK_SPEED);
             mp.start();
-            applySpeedSafely();
+            if (kick) {
+                final int token = ++kickToken;
+                ui.postDelayed(new Runnable() {
+                    @Override public void run() {
+
+                        if (token == kickToken) applySpeedSafely();
+                    }
+                }, KICK_MS);
+                Probe.log("aac start at " + KICK_SPEED + "x, speed restored in " + KICK_MS + " ms");
+            } else {
+                applySpeedSafely();
+            }
         } catch (Exception e) { Probe.log("start failed: " + e.getMessage()); return; }
         wantPlay = false;
         pausedByFocus = false;
@@ -278,6 +291,7 @@ public class PlayerService extends Service
     }
 
     public void pause(boolean byUser) {
+        kickToken++;
         if (mp != null && prepared) {
             try { if (mp.isPlaying()) { mp.pause(); resumingFromPause = true; } }
             catch (Exception ignored) {}
@@ -328,9 +342,31 @@ public class PlayerService extends Service
     public void prev() { if (index > 0) openAt(index - 1, true); else seekTo(0); }
 
     public void speed(float v) {
+        kickToken++;
         store.speed(v);
         applySpeedSafely();
         changed();
+    }
+
+    private static final float KICK_SPEED = 0.99f;
+    private static final long  KICK_MS = 1000L;
+    private int kickToken = 0;
+
+    private boolean needsKick() {
+        Folder.Item it = current();
+        if (it == null) return false;
+        if (Math.abs(store.speed() - 1.0f) > 0.01f) return false;
+        return Folder.isMp4(it.name, it.mime);
+    }
+
+    private void setSpeedRaw(float v) {
+        try {
+            PlaybackParams pp = mp.getPlaybackParams();
+            pp.setSpeed(v);
+            mp.setPlaybackParams(pp);
+        } catch (Exception e) {
+            Probe.log("speed " + v + " refused: " + e.getClass().getSimpleName());
+        }
     }
 
     private void applySpeedSafely() {
@@ -373,7 +409,15 @@ public class PlayerService extends Service
 
     @Override public void onCompletion(MediaPlayer p) {
         Folder.Item it = current();
-        if (it != null) store.save(it.docId, Math.max(0, duration()), duration());
+        if (it != null) {
+
+            long d = duration();
+            if (d <= 0) d = it.duration;
+            if (d <= 0) d = store.duration(it.docId);
+            if (d <= 0) try { d = p.getDuration(); } catch (Exception ignored) {}
+            store.finish(it.docId, d);
+            Probe.log("finished: " + it.name);
+        }
         if (sleepAtEnd) { sleepAtEnd = false; pause(true); return; }
         next();
     }

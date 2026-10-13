@@ -136,11 +136,25 @@ public class Store {
     public boolean done(String docId)  { return pos.getBoolean("f_" + docId, false); }
 
     public long resumeAt(String docId) {
+        if (done(docId)) return 0L;
         long p = position(docId);
         long d = duration(docId);
         if (p <= EDGE_HEAD) return 0L;
         if (d > 0 && p >= d - EDGE_TAIL) return 0L;
         return Math.max(0L, p - REWIND);
+    }
+
+    public void finish(String docId, long d) {
+        SharedPreferences.Editor e = pos.edit();
+        e.putBoolean("f_" + docId, true);
+        e.putLong("p_" + docId, 0L);
+        if (d > 0) e.putLong("d_" + docId, d);
+        e.putLong("t_" + docId, System.currentTimeMillis());
+        e.commit();
+    }
+
+    public void unfinish(String docId) {
+        pos.edit().putBoolean("f_" + docId, false).commit();
     }
 
     public void save(String docId, long p, long d) {

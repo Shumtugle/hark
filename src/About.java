@@ -13,7 +13,7 @@ import android.widget.*;
 
 public final class About {
 
-    public static final String VERSION = "2.9.7";
+    public static final String VERSION = "2.9.9";
     public static final String SRC = "https://github.com/Shumtugle/hark";
     public static final String CLAUDE = "https://claude.ai";
     public static final String PAGE = "https://shumtugle.github.io/hark/";
@@ -367,6 +367,13 @@ public final class About {
         "<p>Проверяются и расширение, и MIME: часть прошивок вместо честного типа отдаёт " +
         "octet-stream, и фильтр по одному признаку съел бы половину файлов.</p>" +
 
+        "<h3>Тишина m4a</h3>" +
+        "<p>На части телефонов система отдаёт длинный AAC звуковому процессору, и тот играет " +
+        "тишину: время идёт, звука нет. Старт со скоростью не ровно 1 эту разгрузку выключает. " +
+        "Поэтому m4a, m4b и aac при скорости 1 стартуют на 0,99× и через секунду получают свою " +
+        "скорость обратно. На слух разницы нет. Mp3 это не касается: для них разгрузка — честная " +
+        "экономия батареи.</p>" +
+
         "<h3>Наушники и звонки</h3>" +
         "<p>Когда звук уходит в гарнитуру, в шапке появляется значок: янтарный для Bluetooth, " +
         "серый для провода. Рядом заряд, если гарнитура его сообщает. В виджете то же самое, " +
@@ -481,6 +488,13 @@ public final class About {
         "<p>MP4 files always come first, whatever the sort order.</p>" +
         "<p>Both extension and MIME are checked: some firmware returns octet-stream instead of an " +
         "honest type, and a filter on one signal alone would swallow half the folder.</p>" +
+
+        "<h3>Silent m4a</h3>" +
+        "<p>On some phones the system hands long AAC to the audio processor, which then plays " +
+        "silence: the clock runs, no sound comes. Starting at any speed other than exactly 1 turns " +
+        "that offload off. So m4a, m4b and aac at speed 1 start at 0.99x and get their speed back " +
+        "a second later; the ear cannot tell. Mp3 is left alone: for it the offload is honest " +
+        "battery saving.</p>" +
 
         "<h3>Headphones and calls</h3>" +
         "<p>When sound leaves for a headset, a mark appears in the header: amber for Bluetooth, " +

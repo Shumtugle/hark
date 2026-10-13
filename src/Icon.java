@@ -6,7 +6,7 @@ import android.graphics.drawable.Drawable;
 public class Icon extends Drawable {
 
     public static final int PLAY = 0, PAUSE = 1, BACK = 2, FWD = 3,
-            UP = 4, FOLDER = 5, SPEED = 6, SLEEP = 7, DOT = 8, LOGO = 9, HEADSET = 10;
+            UP = 4, FOLDER = 5, SPEED = 6, SLEEP = 7, DOT = 8, LOGO = 9, HEADSET = 10, DONE = 11;
 
     private final int kind;
     private final String label;
@@ -141,6 +141,14 @@ public class Icon extends Drawable {
                         cx - r + bw * 0.65f, cy - r * 0.05f + bh), rr, rr, fill);
                 cv.drawRoundRect(new RectF(cx + r - bw * 0.65f, cy - r * 0.05f,
                         cx + r + bw * 0.35f, cy - r * 0.05f + bh), rr, rr, fill);
+                break;
+            }
+            case DONE: {
+                float w2 = u * 0.28f;
+                p.moveTo(cx - w2, cy + u * 0.02f);
+                p.lineTo(cx - u * 0.06f, cy + u * 0.19f);
+                p.lineTo(cx + w2, cy - u * 0.19f);
+                cv.drawPath(p, stroke);
                 break;
             }
             case LOGO: {

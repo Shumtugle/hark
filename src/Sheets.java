@@ -175,6 +175,19 @@ public final class Sheets {
         });
         col.addView(start);
 
+        final boolean fin = a.store().done(it.docId);
+        TextView mark = row(a, I18n.t(fin ? I18n.MARK_UNDONE : I18n.MARK_DONE),
+                fin ? Ui.TEXT_2 : Ui.TEXT);
+        mark.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View x) {
+                if (fin) a.store().unfinish(it.docId);
+                else a.store().finish(it.docId, a.store().duration(it.docId));
+                a.refreshList();
+                d.dismiss();
+            }
+        });
+        col.addView(mark);
+
         TextView forget = row(a, I18n.t(I18n.FORGET), Ui.TEXT);
         forget.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View x) {
