@@ -12,14 +12,16 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/** The list: folders, files, and the Continue row first. */
 public class Rows extends BaseAdapter {
 
     public static final int T_CONT = 0, T_DIR = 1, T_FILE = 2;
 
+    /** The first row of the list, when there is something to continue. */
     public static class Cont {
         public String docId, name, folderId, folderName;
         public long position, duration;
-        public boolean elsewhere;
+        public boolean elsewhere;      // the file is in another folder
     }
 
     private final Context ctx;
@@ -66,9 +68,11 @@ public class Rows extends BaseAdapter {
         return reuse;
     }
 
+    // ---------- building ----------
+
     private static class Holder {
         LinearLayout root;
-        View mark;
+        View mark;            // the vertical rule on the left
         ImageView icon;
         TextView title, right, sub;
         Bar bar;
@@ -142,6 +146,8 @@ public class Rows extends BaseAdapter {
         return h;
     }
 
+    // ---------- binding ----------
+
     private void bindCont(Cont c, Holder h) {
         h.mark.setBackgroundColor(Ui.ACCENT);
         h.icon.setImageDrawable(new Icon(Icon.PLAY, Ui.ACCENT));
@@ -178,7 +184,8 @@ public class Rows extends BaseAdapter {
         h.sub.setVisibility(View.GONE);
 
         if (isPlaying) {
-
+            // a single rule spoke too quietly: in a folder of forty chapters the current one
+            // must be seen without squinting
             PlayerService ps = PlayerService.get();
             h.icon.setVisibility(View.VISIBLE);
             h.icon.setImageDrawable(new Icon(
@@ -187,7 +194,8 @@ public class Rows extends BaseAdapter {
             h.title.setTypeface(Typeface.DEFAULT_BOLD);
             h.root.setBackgroundColor(0x14D49A3A);
         } else if (done) {
-
+            // A finished file is marked not by colour alone: a grey name is easily mistaken
+            // for one never started.
             h.icon.setVisibility(View.VISIBLE);
             h.icon.setImageDrawable(new Icon(Icon.DONE, Ui.TEXT_OFF));
             h.title.setTextColor(Ui.TEXT_OFF);
@@ -211,8 +219,10 @@ public class Rows extends BaseAdapter {
         if (it.duration < 0) askDuration(it);
     }
 
+    // ---------- lazy duration ----------
+
     private void askDuration(final Folder.Item it) {
-        it.duration = 0;
+        it.duration = 0;                       // request filed
         final android.net.Uri tree = ((MainActivity) ctx).tree();
         if (tree == null) return;
         final Rows self = this;

@@ -10,17 +10,30 @@ import android.provider.DocumentsContract;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Cover art for the widget and the panel.
+ *
+ * Search order: artwork embedded in the file first, then an image lying in the same folder.
+ * The second matters more: an audiobook cut into chapters usually has no tags at all, yet its
+ * cover sits next to it as a picture.
+ *
+ * The result is cached: the widget redraws every few seconds, and reading metadata that often
+ * would be wasteful.
+ */
 public final class Cover {
 
     private static final String[] PREFERRED = {
         "cover", "folder", "front", "album", "artwork", "albumart", "обложка" };
     private static final String[] PIC_EXT = { ".jpg", ".jpeg", ".png", ".webp" };
 
+    // Cache for two sizes: the widget wants a large one and the panel a small one, and a
+    // single slot would make them evict each other on every redraw.
     private static final java.util.HashMap<String, Bitmap> CACHE = new java.util.HashMap<>();
     private static final java.util.HashSet<String> EMPTY = new java.util.HashSet<>();
 
     private Cover() {}
 
+    /** Cache key is file plus folder: neighbouring chapters share one cover. */
     public static Bitmap get(Context c, Uri tree, String docId, String folderId, int px) {
         return get(c, tree, docId, folderId, px, false);
     }
@@ -37,13 +50,18 @@ public final class Cover {
         if (b != null && faded) b = fade(b);
         if (b == null) EMPTY.add(key);
         else {
-
+            // nothing is freed by hand, so the cache is kept short
             if (CACHE.size() >= 6) CACHE.clear();
             CACHE.put(key, b);
         }
         return b;
     }
 
+    /**
+     * Forget, but do NOT recycle. A bitmap handed out lives on in the panel and in the widget;
+     * recycling it here crashed the very next redraw. The garbage collector will free it once
+     * nothing shows it any more.
+     */
     public static synchronized void forget() {
         CACHE.clear();
         EMPTY.clear();
@@ -60,6 +78,7 @@ public final class Cover {
         return null;
     }
 
+    /** Artwork embedded in the file. */
     private static byte[] embedded(Context c, Uri tree, String docId) {
         MediaMetadataRetriever r = new MediaMetadataRetriever();
         try {
@@ -74,6 +93,7 @@ public final class Cover {
         }
     }
 
+    /** An image lying in the same folder. */
     private static Bitmap beside(Context c, Uri tree, String folderId, int px) {
         if (tree == null || folderId == null) return null;
         try {
@@ -85,7 +105,7 @@ public final class Cover {
                 boolean pic = false;
                 for (String e : PIC_EXT) if (n.endsWith(e)) { pic = true; break; }
                 if (!pic) continue;
-
+                // a conventional cover name beats a stray screenshot
                 for (String p : PREFERRED) {
                     if (n.startsWith(p)) { best = it; break; }
                 }
@@ -120,6 +140,10 @@ public final class Cover {
         }
     }
 
+    /**
+     * Fade towards one edge, so that labels laid over the art stay readable. The other side
+     * stays dense: that is where the picture is.
+     */
     private static Bitmap fade(Bitmap src) {
         try {
             int w = src.getWidth(), h = src.getHeight();
@@ -127,7 +151,7 @@ public final class Cover {
             Canvas cv = new Canvas(out);
             cv.drawBitmap(src, 0, 0, null);
             Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-
+            // Horizontal rather than diagonal: the right edge is the one that fades.
             p.setShader(new LinearGradient(0, 0, w, 0,
                     new int[]{0xFF000000, 0xCC000000, 0x26000000},
                     new float[]{0f, 0.35f, 1f}, Shader.TileMode.CLAMP));
@@ -139,6 +163,7 @@ public final class Cover {
         }
     }
 
+    /** Centre crop to a square with rounded corners. */
     private static Bitmap square(Bitmap src, int px) {
         try {
             int w = src.getWidth(), h = src.getHeight();

@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+     Two columns. On the left the content: title, source, progress,
+     time codes, controls. On the right the state: the cover.
 
+     The left column is sized by weight, the right one by its content,
+     so the text is cut at the right column's edge by itself, the same
+     way with a cover and without.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -37,7 +44,11 @@
             android:layout_weight="1"
             android:orientation="vertical">
 
-            
+            <!--
+                 The charge lives in the title line. When a cover appears the
+                 column narrows, the pill moves left and trims the end of a long
+                 name. Nothing jumps anywhere.
+            -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -127,7 +138,11 @@
                     android:fontFamily="monospace"/>
             </LinearLayout>
 
-            
+            <!--
+                 All five on weights: with a cover the column narrows, and fixed
+                 sizes clipped the outer buttons. The outer ones are pinned to the
+                 edges by gravity inside their own segments.
+            -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -188,7 +203,11 @@
             </LinearLayout>
         </LinearLayout>
 
-        
+        <!--
+             The cover is a square with rounded corners. Its height follows
+             the zone and its width adjusts itself, because the picture is
+             square. Nothing lies on top of it.
+        -->
         <ImageView
             android:id="@+id/w_art"
             android:layout_width="wrap_content"

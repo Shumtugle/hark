@@ -13,6 +13,7 @@ import android.widget.*;
 
 import java.util.List;
 
+/** Everything that slides in over the screen. */
 public final class Sheets {
 
     private Sheets() {}
@@ -39,6 +40,8 @@ public final class Sheets {
         return t;
     }
 
+    // ---------- speed ----------
+
     public static void speed(final MainActivity a) {
         final float[] vals = {0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
         final Store st = a.store();
@@ -60,6 +63,8 @@ public final class Sheets {
         }
         d.show();
     }
+
+    // ---------- sleep timer ----------
 
     public static void sleep(final MainActivity a) {
         final PlayerService s = PlayerService.get();
@@ -92,6 +97,8 @@ public final class Sheets {
         col.addView(end);
         d.show();
     }
+
+    // ---------- exact jump ----------
 
     public static void jump(final MainActivity a) {
         final PlayerService s = PlayerService.get();
@@ -155,6 +162,8 @@ public final class Sheets {
         catch (Exception x) { return 0; }
     }
 
+    // ---------- file menu ----------
+
     public static void file(final MainActivity a, final Folder.Item it) {
         LinearLayout col = column(a);
         final AlertDialog d = dark(a).setView(col).create();
@@ -206,6 +215,7 @@ public final class Sheets {
         d.show();
     }
 
+    /** A link to the original file is handed over; no copy is made. */
     public static void share(MainActivity a, Folder.Item it) {
         Uri tree = a.tree();
         if (tree == null) return;
@@ -241,6 +251,8 @@ public final class Sheets {
         sc.addView(t);
         dark(a).setView(sc).setPositiveButton(I18n.t(I18n.CLOSE), null).show();
     }
+
+    // ---------- history ----------
 
     public static void history(final MainActivity a) {
         List<Store.Recent> h = a.store().history();
@@ -283,6 +295,10 @@ public final class Sheets {
         s.addView(v);
         return s;
     }
+
+    // ---------- inquest ----------
+
+    // ---------- bookmarks ----------
 
     public static void marks(final MainActivity a) {
         LinearLayout col = column(a);
@@ -346,6 +362,8 @@ public final class Sheets {
         d.show();
     }
 
+    // ---------- sort ----------
+
     public static void sort(final MainActivity a) {
         final int[] modes = {Folder.SORT_NAME, Folder.SORT_PLAYED,
                              Folder.SORT_DURATION, Folder.SORT_MODIFIED};
@@ -370,6 +388,8 @@ public final class Sheets {
         d.show();
     }
 
+    // ---------- inquest ----------
+
     public static void probe(final MainActivity a) {
         final String full = a.probeReport();
 
@@ -377,6 +397,9 @@ public final class Sheets {
         col.setOrientation(LinearLayout.VERTICAL);
         col.setBackgroundColor(Ui.SURFACE);
 
+        // Lines are filtered rather than highlighted with a jump to the next match: on a
+        // narrow screen highlighting needs a scroll to every hit, while filtering shows them
+        // all at once.
         final EditText find = new EditText(a);
         find.setHint("filter");
         find.setTextSize(13f);
@@ -425,7 +448,8 @@ public final class Sheets {
                             cm.setPrimaryClip(android.content.ClipData.newPlainText("hark", full));
                             Toast.makeText(a, I18n.t(I18n.COPIED), Toast.LENGTH_SHORT).show();
                         } catch (Exception ex) {
-
+                            // a silent failure is worse than an honest one: the person would
+                            // walk away with an empty clipboard
                             Toast.makeText(a, I18n.t(I18n.SEND_FAIL), Toast.LENGTH_LONG).show();
                         }
                     }
@@ -435,6 +459,8 @@ public final class Sheets {
                 })
                 .show();
     }
+
+    // ---------- folder menu ----------
 
     public static void folder(final MainActivity a) {
         LinearLayout col = column(a);

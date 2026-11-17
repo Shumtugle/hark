@@ -9,12 +9,19 @@ import android.media.AudioManager;
 
 import java.lang.reflect.Method;
 
+/**
+ * Where the sound is going right now, and how much charge the headset has left.
+ *
+ * Android does not expose the headset charge publicly: the method exists but is hidden. It is
+ * reached through reflection, and failure is treated as normal: some firmware and some
+ * headsets do not report it at all, and the app has to live without it.
+ */
 public final class Audio {
 
     public static class Out {
-        public boolean wired;
-        public boolean bluetooth;
-        public int battery = -1;
+        public boolean wired;        // a cable in the jack, or USB
+        public boolean bluetooth;    // a wireless headset
+        public int battery = -1;     // percent, or -1 when unknown
         public String name;
 
         public boolean any() { return wired || bluetooth; }
@@ -49,6 +56,7 @@ public final class Audio {
         return o;
     }
 
+    /** Headset charge. The method is hidden, so everything is guarded. */
     private static void battery(Context c, Out o) {
         try {
             BluetoothAdapter a = BluetoothAdapter.getDefaultAdapter();
@@ -74,6 +82,7 @@ public final class Audio {
         }
     }
 
+    /** First path: the hidden battery-level method. */
     private static int viaLevel(BluetoothDevice d) {
         try {
             Method m = BluetoothDevice.class.getMethod("getBatteryLevel");
@@ -82,10 +91,14 @@ public final class Audio {
         } catch (Throwable t) { return -1; }
     }
 
+    /**
+     * Second path: device metadata. Some firmware keeps the charge only here, and this is
+     * usually the value the system settings show.
+     */
     private static int viaMetadata(BluetoothDevice d) {
         try {
             Method m = BluetoothDevice.class.getMethod("getMetadata", int.class);
-            Object v = m.invoke(d, 18);
+            Object v = m.invoke(d, 18);          // main battery metadata key
             if (v instanceof byte[]) {
                 String s = new String((byte[]) v, "UTF-8").trim();
                 if (!s.isEmpty()) return Integer.parseInt(s);
@@ -98,6 +111,7 @@ public final class Audio {
         try { return d.getName(); } catch (Throwable t) { return null; }
     }
 
+    /** Short label: percent when known, otherwise nothing. */
     public static String label(Out o) {
         if (o == null || !o.any()) return "";
         return o.battery >= 0 ? o.battery + "%" : "";

@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.view.View;
 
+/** Position bar: a dim bed and an amber fill, edge to edge. */
 public class Bar extends View {
 
     private final Paint bed = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -31,6 +32,7 @@ public class Bar extends View {
 
     private boolean knob = false;
 
+    /** The knob is the only hint that the bar can be dragged. */
     public void knob(boolean on) { knob = on; invalidate(); }
 
     @Override protected void onDraw(Canvas cv) {

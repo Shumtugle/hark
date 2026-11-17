@@ -4,6 +4,10 @@ import android.content.Context;
 import java.util.HashMap;
 import java.util.Locale;
 
+/**
+ * Languages. Strings are kept in arrays indexed by key: cheaper in memory and easier to read
+ * than dozens of separate fields for each of fourteen languages.
+ */
 public final class I18n {
 
     public static final String[] CODES = {
@@ -19,6 +23,7 @@ public final class I18n {
         "Українська","中文","العربية","עברית","اردو","Кыргызча","Қазақша" };
     private static final String[] RTL_CODES = {"ar","iw","ur"};
 
+    // ---- keys ----
     public static final int
         NOTHING=0, CONT=1, OF=2, OUTSIDE=3, SETTINGS=4, ABOUT=5, LANGUAGE=6,
         SORT=7, S_NAME=8, S_PLAYED=9, S_DURATION=10, S_MODIFIED=11, SORT_HINT=12,
@@ -33,8 +38,8 @@ public final class I18n {
         MB=54, ALL=55, NOTHING_YET=56, REMEMBER_FILTER=57, WIDGET=58, WIDGET_FRAME=59,
         MARKS=60, MARK_ADD=61, MARK_NONE=62, MARK_DEL=63, ROOT_SHORT=64,
         HIDDEN_1=65, HIDDEN_2=66, HIDDEN_3=67, EMPTY_FOLDER=68, CRASHED=69, RESUME_BACK=70,
-        MARK_DONE=71, MARK_UNDONE=72;
-    public static final int COUNT = 73;
+        MARK_DONE=71, MARK_UNDONE=72, IDLE_CLOSE=73, CLOSE_APP=74;
+    public static final int COUNT = 75;
 
     static final String[] EN = {
         "Nothing selected","Continue","of","Outside","Settings","About","Language",
@@ -55,7 +60,8 @@ public final class I18n {
         "Bookmarks", "Bookmark this folder", "No bookmarks yet", "Long press to remove", "root",
         "The filter hides", "files here", "Tap to show everything", "This folder is empty", "Hark closed unexpectedly last time. The inquest kept the details.",
         "Rewind on resume",
-        "Mark as finished", "Mark as unfinished" };
+        "Mark as finished", "Mark as unfinished",
+        "Close after a pause", "Close Hark" };
 
     static final String[] RU = {
         "Ничего не выбрано","Продолжить","из","Извне","Настройки","О программе","Язык",
@@ -76,7 +82,8 @@ public final class I18n {
         "Закладки", "Заложить эту папку", "Закладок пока нет", "Долгий тап удаляет", "корень",
         "Фильтр прячет", "файлов", "Нажмите, чтобы показать всё", "В этой папке пусто", "В прошлый раз Hark закрылся сам. Подробности сохранены в дознании.",
         "Откат при продолжении",
-        "Отметить дослушанным", "Снять отметку" };
+        "Отметить дослушанным", "Снять отметку",
+        "Закрывать после паузы", "Закрыть Hark" };
 
     static final String[] FI = {
         "Ei valintaa","Jatka","/","Ulkoa","Asetukset","Tietoja","Kieli",
@@ -97,7 +104,8 @@ public final class I18n {
         "Kirjanmerkit", "Merkitse tämä kansio", "Ei kirjanmerkkejä", "Pitkä painallus poistaa", "juuri",
         "Suodatin piilottaa", "tiedostoa", "Napauta näyttääksesi kaiken", "Tämä kansio on tyhjä", "Hark sulkeutui viimeksi itsestään. Tiedot ovat tutkinnassa.",
         "Kelaus jatkettaessa",
-        "Merkitse kuunnelluksi", "Poista merkintä" };
+        "Merkitse kuunnelluksi", "Poista merkintä",
+        "Sulje tauon jälkeen", "Sulje Hark" };
 
     static final String[] SV = {
         "Inget valt","Fortsätt","av","Utifrån","Inställningar","Om","Språk",
@@ -118,7 +126,8 @@ public final class I18n {
         "Bokmärken", "Bokmärk denna mapp", "Inga bokmärken än", "Långt tryck tar bort", "rot",
         "Filtret döljer", "filer", "Tryck för att visa allt", "Mappen är tom", "Hark stängdes oväntat förra gången. Detaljerna finns i utredningen.",
         "Backa vid återupptagning",
-        "Markera som lyssnad", "Ta bort markering" };
+        "Markera som lyssnad", "Ta bort markering",
+        "Stäng efter paus", "Stäng Hark" };
 
     static final String[] DE = {
         "Nichts ausgewählt","Fortsetzen","von","Von außen","Einstellungen","Über","Sprache",
@@ -139,7 +148,8 @@ public final class I18n {
         "Lesezeichen", "Diesen Ordner merken", "Noch keine Lesezeichen", "Langes Tippen entfernt", "Stamm",
         "Der Filter verbirgt", "Dateien", "Tippen, um alles zu zeigen", "Dieser Ordner ist leer", "Hark hat sich zuletzt unerwartet beendet. Einzelheiten im Befund.",
         "Rücklauf beim Fortsetzen",
-        "Als gehört markieren", "Markierung entfernen" };
+        "Als gehört markieren", "Markierung entfernen",
+        "Nach einer Pause schließen", "Hark schließen" };
 
     static final String[] FR = {
         "Rien de sélectionné","Reprendre","sur","De l'extérieur","Réglages","À propos","Langue",
@@ -160,7 +170,8 @@ public final class I18n {
         "Signets", "Ajouter ce dossier", "Aucun signet", "Appui long pour retirer", "racine",
         "Le filtre masque", "fichiers", "Appuyez pour tout afficher", "Ce dossier est vide", "Hark s\u2019est fermé seul la dernière fois. Détails dans l\u2019enquête.",
         "Retour à la reprise",
-        "Marquer comme écouté", "Retirer la marque" };
+        "Marquer comme écouté", "Retirer la marque",
+        "Fermer après une pause", "Fermer Hark" };
 
     static final String[] ES = {
         "Nada seleccionado","Continuar","de","Desde fuera","Ajustes","Acerca de","Idioma",
@@ -181,7 +192,10 @@ public final class I18n {
         "Marcadores", "Marcar esta carpeta", "Sin marcadores", "Pulsación larga para quitar", "raíz",
         "El filtro oculta", "archivos", "Toque para mostrar todo", "Esta carpeta está vacía", "Hark se cerró solo la última vez. Los detalles están en la indagación.",
         "Retroceso al reanudar",
-        "Marcar como escuchado", "Quitar la marca" };
+        "Marcar como escuchado", "Quitar la marca",
+        "Cerrar tras una pausa", "Cerrar Hark" };
+
+    // ---- mechanics ----
 
     private static final HashMap<String, String[]> T = new HashMap<>();
     private static String active = "en";
@@ -194,12 +208,13 @@ public final class I18n {
 
     private I18n() {}
 
+    /** Picks the language: the one chosen in settings, or the system one. */
     public static void apply(Context c, String pref) {
         String code = pref;
         if (code == null || code.equals("auto")) {
             Locale l = c.getResources().getConfiguration().getLocales().get(0);
             code = l.getLanguage();
-            if ("he".equals(code)) code = "iw";
+            if ("he".equals(code)) code = "iw";      // Java reports the legacy code
             if ("in".equals(code)) code = "id";
         }
         active = T.containsKey(code) ? code : "en";
@@ -218,6 +233,7 @@ public final class I18n {
         return (key < a.length && a[key] != null) ? a[key] : EN[key];
     }
 
+    /** A language's own name, for the picker. */
     public static String nameOf(String code) {
         for (int i = 0; i < CODES.length; i++) if (CODES[i].equals(code)) return NAMES[i];
         return code;

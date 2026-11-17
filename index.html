@@ -81,6 +81,30 @@
   footer a{color:var(--amber)}
   a{color:var(--amber)}
   .ver{color:var(--off);font-size:12.5px;letter-spacing:.04em}
+
+  /* sleep demo */
+  .sleep{display:grid;gap:22px;grid-template-columns:1fr;margin-top:8px}
+  @media (min-width:700px){ .sleep{grid-template-columns:300px 1fr;align-items:start} }
+  .phone{background:#0E0D0B;border:1px solid var(--line);border-radius:22px;padding:18px 14px 16px;min-height:330px;position:relative}
+  .clock{font-size:44px;font-weight:300;text-align:center;color:#CFC8BA;letter-spacing:.04em;margin:2px 0 12px}
+  .card{background:var(--raise);border-radius:14px;padding:12px 14px;transition:opacity .45s,transform .45s;margin-bottom:12px}
+  .card.gone{opacity:0;transform:translateY(-8px);pointer-events:none}
+  .card .t{font-size:13.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .f{font-size:12px;color:var(--dim)}
+  .row{display:flex;gap:6px;margin-top:9px}
+  .row button,.chips button,.wdg button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:8px;padding:6px 0;flex:1;font-size:14px}
+  .row button.x{flex:.7;color:var(--dim)}
+  .wdg{border:1px solid var(--line);border-radius:14px;padding:10px 12px;position:absolute;left:14px;right:14px;bottom:16px}
+  .wdg .bar{height:3px;background:var(--line);border-radius:2px;margin:7px 0}
+  .wdg .bar i{display:block;height:100%;width:0;background:var(--amber);border-radius:2px}
+  .wdg .row button{padding:4px 0}
+  .state{font-size:14px;color:var(--dim);margin:0 0 10px}
+  .state b{color:var(--amber);font-weight:700}
+  .meter{height:6px;background:var(--surface);border:1px solid var(--line);border-radius:4px;overflow:hidden;margin:4px 0 16px}
+  .meter i{display:block;height:100%;width:0;background:var(--amber-dk)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
+  .chips button{flex:none;padding:5px 12px;border-radius:20px;color:var(--dim)}
+  .chips button.on{border-color:var(--amber);color:var(--amber)}
 </style>
 </head>
 <body>
@@ -88,7 +112,7 @@
 
   <div class="top">
     <img src="icon.png" alt="Hark icon">
-    <span><b>Hark</b> — version 2.9.9 · Android 8.0+ · 122 kB</span>
+    <span><b>Hark</b> — version 2.10.0 · Android 8.0+ · 122 kB</span>
   </div>
 
   <header>
@@ -97,7 +121,7 @@
       <p class="lede">A player for long recordings from a single folder.</p>
       <p class="sub">Two-hour lectures, audiobooks, recorded talks. It opens a folder, not a library — and it remembers where you stopped in every file.</p>
       <div class="cta">
-        <a class="btn" href="hark-2.9.9.apk">Download APK</a>
+        <a class="btn" href="hark-2.10.0.apk">Download APK</a>
         <a class="btn ghost" href="https://github.com/Shumtugle/hark">Source on GitHub</a>
       </div>
       <p class="fine">No permissions beyond the folder you grant yourself. No internet, no accounts, no ads, no tracking.</p>
@@ -169,6 +193,51 @@
   </section>
 
   <section>
+    <p class="eyebrow">Sleep</p>
+    <h2>A pause does not last for days</h2>
+    <p>A paused media player still sits in the foreground, and Android keeps its notification and lock screen card as long as the app likes — days, in practice, clinging to a file nobody is listening to. Now every pause arms an alarm. When it fires and nothing is playing, Hark saves the position, takes the card down and exits completely. An alarm, not a timer: timer time stands still while the phone sleeps.</p>
+    <p>The widget is not part of the process, so it survives: it draws the last state from storage, and a tap wakes the player at the same second. To close at once, there is a cross in the expanded notification, an item at the bottom of the menu, and a swipe from recent apps while paused.</p>
+
+    <div class="sleep">
+      <div class="phone" aria-label="Lock screen demo">
+        <div class="clock" id="sClock">07:42</div>
+        <div class="card" id="sCard">
+          <div class="t">Lecture 04 — Byzantium.m4a</div>
+          <div class="f">Hark · <span id="sPos">41:07</span> / 1:52:30</div>
+          <div class="row">
+            <button type="button" data-a="back">−15</button>
+            <button type="button" data-a="toggle" id="sTog">❚❚</button>
+            <button type="button" data-a="fwd">+30</button>
+            <button type="button" class="x" data-a="close" title="Close">✕</button>
+          </div>
+        </div>
+        <div class="wdg">
+          <div class="f" style="font-size:12px;color:var(--dim)">Lecture 04 — Byzantium.m4a</div>
+          <div class="bar"><i id="sBar"></i></div>
+          <div class="row">
+            <button type="button" data-a="back">−15</button>
+            <button type="button" data-a="toggle" id="sWTog">❚❚</button>
+            <button type="button" data-a="fwd">+30</button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="state" id="sState">Playing. The card stays — Android needs it to keep the sound.</p>
+        <div class="meter"><i id="sMeter"></i></div>
+        <p class="fine" style="margin-bottom:4px">Close after a pause</p>
+        <div class="chips" id="sChips">
+          <button type="button" data-m="10">10′</button>
+          <button type="button" data-m="30" class="on">30′</button>
+          <button type="button" data-m="60">60′</button>
+          <button type="button" data-m="180">180′</button>
+          <button type="button" data-m="0">never</button>
+        </div>
+        <p class="fine">Press pause and watch. Here a minute lasts a tenth of a second; on the phone it is a minute.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <p class="eyebrow">On the home screen</p>
     <h2>A widget that can disappear</h2>
     <p>File name, folder, position bar, times, and five buttons: previous, back fifteen, play, forward thirty, next. A battery pill for the headset sits in the title line when the headset reports its charge, and disappears when it does not. Tapping the name or the background opens Hark on the folder you were in.</p>
@@ -213,7 +282,7 @@
 javac -encoding UTF-8 --release 8 -classpath android.jar -d cls $(find src gen -name "*.java")
 dx --dex --min-sdk-version=26 --output=classes.dex cls
 zip base.ap_ classes.dex && zipalign -f 4 base.ap_ aligned.apk
-apksigner sign --ks shumtugle.keystore --out hark-2.9.9.apk aligned.apk</pre>
+apksigner sign --ks shumtugle.keystore --out hark-2.10.0.apk aligned.apk</pre>
     <p class="fine">One honest scar worth recording: the first build crashed instantly. <code>dx</code> is old enough to leave <code>invoke-custom</code> instructions in the bytecode, asking the runtime for <code>LambdaMetafactory</code> — a class Android does not have. Modern tooling always desugars lambdas for exactly this reason. All forty-seven of them were rewritten as anonymous classes by hand.</p>
   </section>
 
@@ -221,7 +290,7 @@ apksigner sign --ks shumtugle.keystore --out hark-2.9.9.apk aligned.apk</pre>
     <p class="eyebrow">Access</p>
     <h2>What it can and cannot reach</h2>
     <p>Hark asks for one thing: the folder, chosen by you, once, through the system picker. Nothing else is readable to it. It has no internet permission at all, so it cannot phone home even if it wanted to.</p>
-    <p>The remaining permissions are the mechanics of playing sound: a foreground service so the audio survives leaving the app, a notification to control it, and a wake lock while sound is actually running.</p>
+    <p>The remaining permissions are the mechanics of playing sound: a foreground service so the audio survives leaving the app, a notification to control it, and a wake lock while sound is actually running. The notification lives only as long as it is needed: a pause winds it down on its own.</p>
     <p>No accounts. No analytics. No advertising identifiers. Nothing is uploaded, because there is nowhere for it to go.</p>
   </section>
 
@@ -229,9 +298,47 @@ apksigner sign --ks shumtugle.keystore --out hark-2.9.9.apk aligned.apk</pre>
     <p>Logic and code: <a href="https://claude.ai">claude.ai</a> — Claude Opus 5<br>
     Source: <a href="https://github.com/Shumtugle/hark">github.com/Shumtugle/hark</a><br>
     Licence: MIT</p>
-    <p class="ver">generated by AI · Claude Opus 5 · v2.9.9</p>
+    <p class="ver">generated by AI · Claude Opus 5 · v2.10.0</p>
   </footer>
 
 </div>
+<script>
+(function(){
+  var DUR=6750, pos=2467, playing=true, alive=true, delay=30, idle=0, last=performance.now();
+  function $(i){return document.getElementById(i)}
+  function fmt(t){t=Math.max(0,Math.floor(t));var h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;
+    return (h?h+':'+(m<10?'0':''):'')+m+':'+(s<10?'0':'')+s}
+  function paint(){
+    $('sPos').textContent=fmt(pos);
+    $('sBar').style.width=(pos/DUR*100)+'%';
+    $('sTog').textContent=$('sWTog').textContent=playing?'❚❚':'▶';
+    $('sCard').classList.toggle('gone',!alive);
+    var st=$('sState'), m=$('sMeter');
+    if(!alive){st.innerHTML='<b>Closed.</b> Position saved at '+fmt(pos)+'. No notification, no card, no process. The widget still works — tap ▶.';m.style.width='0'}
+    else if(playing){st.textContent='Playing. The card stays — Android needs it to keep the sound.';m.style.width='0'}
+    else if(!delay){st.textContent='Paused. Set to never: the card stays until you close it.';m.style.width='0'}
+    else{var left=delay-idle;st.innerHTML='Paused. Closing in <b>'+Math.ceil(left)+' min</b> of silence.';m.style.width=(idle/delay*100)+'%'}
+  }
+  function act(a){
+    if(a==='close'){playing=false;alive=false;idle=0}
+    else if(a==='toggle'){ if(!alive){alive=true;playing=true;pos=Math.max(0,pos-3.5)} else {playing=!playing; if(playing)pos=Math.max(0,pos-3.5)} idle=0 }
+    else if(a==='back'){alive=true;pos=Math.max(0,pos-15)}
+    else if(a==='fwd'){alive=true;pos=Math.min(DUR,pos+30)}
+    paint();
+  }
+  document.querySelectorAll('.phone [data-a]').forEach(function(b){b.addEventListener('click',function(){act(b.getAttribute('data-a'))})});
+  document.querySelectorAll('#sChips button').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('#sChips button').forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on');delay=+b.getAttribute('data-m');idle=0;paint()})});
+  function tick(now){
+    var dt=(now-last)/1000; last=now;
+    if(alive&&playing){pos=Math.min(DUR,pos+dt)}
+    else if(alive&&delay){idle+=dt*10; if(idle>=delay){alive=false;idle=0}}
+    var d=new Date();$('sClock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();
+    paint(); requestAnimationFrame(tick);
+  }
+  paint(); requestAnimationFrame(tick);
+})();
+</script>
 </body>
 </html>

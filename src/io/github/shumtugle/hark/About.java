@@ -11,9 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.*;
 
+/** Settings and help: everything that lives behind the logo. */
 public final class About {
 
-    public static final String VERSION = "2.9.9";
+    public static final String VERSION = "2.10.0";
     public static final String SRC = "https://github.com/Shumtugle/hark";
     public static final String CLAUDE = "https://claude.ai";
     public static final String PAGE = "https://shumtugle.github.io/hark/";
@@ -34,6 +35,7 @@ public final class About {
         return t;
     }
 
+    /** One door behind the logo: everything that is needed only now and then. */
     public static void menu(final MainActivity a) {
         LinearLayout col = new LinearLayout(a);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -74,8 +76,24 @@ public final class About {
         });
         col.addView(abt);
 
+        col.addView(line(a));
+
+        // A full stop: position saved, notification and lock screen card gone, process free.
+        TextView cls = row(a, "\u2715  " + I18n.t(I18n.CLOSE_APP), null, Ui.TEXT_2);
+        cls.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View x) {
+                d.dismiss();
+                PlayerService s = PlayerService.get();
+                if (s != null) s.shutDown("closed from the menu");
+                a.finishAndRemoveTask();
+            }
+        });
+        col.addView(cls);
+
         d.show();
     }
+
+    // ---------- settings ----------
 
     public static void settings(final MainActivity a) {
         LinearLayout col = new LinearLayout(a);
@@ -89,6 +107,7 @@ public final class About {
         head.setTextSize(12f);
         col.addView(head);
 
+        // language
         TextView lang = row(a, I18n.t(I18n.LANGUAGE) + "  ·  "
                 + I18n.nameOf(a.store().lang()), null, Ui.TEXT);
         lang.setOnClickListener(new View.OnClickListener() {
@@ -96,12 +115,15 @@ public final class About {
         });
         col.addView(lang);
 
+
+        // speed
         TextView sp = row(a, I18n.t(I18n.SPEED) + "  ·  " + speedLabel(a.store().speed()), null, Ui.TEXT);
         sp.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View x) { d.dismiss(); Sheets.speed(a); }
         });
         col.addView(sp);
 
+        // rewind on resume
         final long[] steps = {0L, 2000L, 3500L, 5000L, 8000L};
         final TextView rb = row(a, "", null, Ui.TEXT);
         rb.setText(I18n.t(I18n.RESUME_BACK) + "  \u00B7  " + backLabel(a.store().resumeBack()));
@@ -117,6 +139,23 @@ public final class About {
         });
         col.addView(rb);
 
+        // close after a pause
+        final long[] idle = {10 * 60_000L, 30 * 60_000L, 60 * 60_000L, 180 * 60_000L, 0L};
+        final TextView ic = row(a, "", null, Ui.TEXT);
+        ic.setText(I18n.t(I18n.IDLE_CLOSE) + "  \u00B7  " + idleLabel(a.store().idleClose()));
+        ic.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View x) {
+                long cur = a.store().idleClose();
+                int at = 0;
+                for (int i = 0; i < idle.length; i++) if (idle[i] == cur) at = i;
+                long next = idle[(at + 1) % idle.length];
+                a.store().idleClose(next);
+                ic.setText(I18n.t(I18n.IDLE_CLOSE) + "  \u00B7  " + idleLabel(next));
+            }
+        });
+        col.addView(ic);
+
+        // remember the filter
         final TextView flt = row(a, "", null, Ui.TEXT);
         flt.setText(I18n.t(I18n.REMEMBER_FILTER) + "  ·  "
                 + (a.store().rememberFilter() ? "\u2713" : "\u2014"));
@@ -129,6 +168,7 @@ public final class About {
         });
         col.addView(flt);
 
+        // widget backdrop
         final String[] names = {"0 %", "25 %", "50 %", "75 %", "100 %"};
         final TextView wg = row(a, "", null, Ui.TEXT);
         wg.setText(I18n.t(I18n.WIDGET) + "  \u00B7  " + names[a.store().widgetShade()]);
@@ -142,20 +182,26 @@ public final class About {
         });
         col.addView(wg);
 
+
+
+        // folder
         TextView fld = row(a, I18n.t(I18n.PICK), null, Ui.TEXT);
         fld.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View x) { d.dismiss(); a.pickFolder(); }
         });
         col.addView(fld);
 
+
         col.addView(line(a));
 
+        // help
         TextView abt = row(a, I18n.t(I18n.ABOUT), null, Ui.ACCENT);
         abt.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View x) { d.dismiss(); doc(a); }
         });
         col.addView(abt);
 
+        // inquest
         TextView prb = row(a, I18n.t(I18n.PROBE), null, Ui.TEXT_2);
         prb.setOnClickListener(new View.OnClickListener() {
             @Override public void onClick(View x) { d.dismiss(); Sheets.probe(a); }
@@ -163,6 +209,12 @@ public final class About {
         col.addView(prb);
 
         d.show();
+    }
+
+    /** Minutes with a prime, so the label needs no translation; a dash means never. */
+    private static String idleLabel(long ms) {
+        if (ms <= 0) return "\u2014";
+        return (ms / 60_000L) + "\u2032";
     }
 
     private static String backLabel(long ms) {
@@ -192,6 +244,8 @@ public final class About {
         return s;
     }
 
+    // ---------- language ----------
+
     public static void language(final MainActivity a) {
         LinearLayout col = new LinearLayout(a);
         col.setOrientation(LinearLayout.VERTICAL);
@@ -216,6 +270,8 @@ public final class About {
         }
         d.show();
     }
+
+    // ---------- help ----------
 
     public static void doc(final MainActivity a) {
         String body = ru() ? RU_DOC : EN_DOC;
@@ -283,6 +339,8 @@ public final class About {
         String c = I18n.code();
         return c.equals("ru") || c.equals("uk") || c.equals("ky") || c.equals("kk");
     }
+
+    // ---------- texts ----------
 
     private static final String RU_DOC =
         "<p><b>Hark " + VERSION + "</b></p>" +
@@ -373,6 +431,17 @@ public final class About {
         "Поэтому m4a, m4b и aac при скорости 1 стартуют на 0,99× и через секунду получают свою " +
         "скорость обратно. На слух разницы нет. Mp3 это не касается: для них разгрузка — честная " +
         "экономия батареи.</p>" +
+
+        "<h3>Сон и закрытие</h3>" +
+        "<p>Пока звучит запись, Hark держит уведомление и карточку на экране блокировки: " +
+        "без них Android остановит звук. На паузе держать их незачем, и раньше они жили " +
+        "сутками. Теперь пауза заводит будильник: через полчаса тишины Hark запоминает " +
+        "место, убирает уведомление и карточку и завершается полностью. Срок меняется " +
+        "в настройках — 10, 30, 60, 180 минут или никогда.</p>" +
+        "<p>Закрыть сразу можно из трёх мест: крестик в развёрнутом уведомлении, " +
+        "последний пункт меню за логотипом, или смахнуть Hark из недавних на паузе. " +
+        "Виджет после этого остаётся рабочим: он показывает последнее состояние, " +
+        "а по нажатию будит плеер с того же места.</p>" +
 
         "<h3>Наушники и звонки</h3>" +
         "<p>Когда звук уходит в гарнитуру, в шапке появляется значок: янтарный для Bluetooth, " +
@@ -495,6 +564,17 @@ public final class About {
         "that offload off. So m4a, m4b and aac at speed 1 start at 0.99x and get their speed back " +
         "a second later; the ear cannot tell. Mp3 is left alone: for it the offload is honest " +
         "battery saving.</p>" +
+
+        "<h3>Sleep and closing</h3>" +
+        "<p>While a recording plays, Hark keeps a notification and a lock screen card: " +
+        "without them Android would stop the sound. On pause there is no reason to keep " +
+        "them, and they used to live for days. Now a pause sets an alarm: after half an " +
+        "hour of silence Hark saves the position, removes the notification and the card, " +
+        "and exits completely. The delay is in the settings: 10, 30, 60, 180 minutes, or never.</p>" +
+        "<p>To close at once, there are three ways: the cross in the expanded notification, " +
+        "the last item of the menu behind the logo, or swiping Hark away from recent apps " +
+        "while paused. The widget keeps working afterwards: it shows the last state, and a " +
+        "tap wakes the player at the same spot.</p>" +
 
         "<h3>Headphones and calls</h3>" +
         "<p>When sound leaves for a headset, a mark appears in the header: amber for Bluetooth, " +

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.util.TypedValue;
 
+/** Palette and the small arithmetic of looks. */
 public final class Ui {
 
     public static final int BG        = Color.parseColor("#171512");
@@ -24,6 +25,7 @@ public final class Ui {
                 TypedValue.COMPLEX_UNIT_DIP, v, c.getResources().getDisplayMetrics()));
     }
 
+    /** 1:12:40 or 4:05: hours appear only when there are any. */
     public static String time(long ms) {
         if (ms < 0) ms = 0;
         long s = ms / 1000;
@@ -32,6 +34,7 @@ public final class Ui {
         return String.format("%d:%02d", m, ss);
     }
 
+    /** The name without its extension. */
     public static String bare(String name) {
         if (name == null) return "";
         int i = name.lastIndexOf('.');

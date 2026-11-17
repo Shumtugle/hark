@@ -3,13 +3,17 @@ package io.github.shumtugle.hark;
 import android.graphics.*;
 import android.graphics.drawable.Drawable;
 
+/**
+ * Icons are drawn in code. No vector resources, no PNG sets: the shape follows the canvas
+ * size, and the colour is one line.
+ */
 public class Icon extends Drawable {
 
     public static final int PLAY = 0, PAUSE = 1, BACK = 2, FWD = 3,
             UP = 4, FOLDER = 5, SPEED = 6, SLEEP = 7, DOT = 8, LOGO = 9, HEADSET = 10, DONE = 11;
 
     private final int kind;
-    private final String label;
+    private final String label;      // the number inside the circular arrow
     private int color;
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint fill   = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -38,7 +42,7 @@ public class Icon extends Drawable {
         Rect b = getBounds();
         float w = b.width(), h = b.height();
         float cx = b.exactCenterX(), cy = b.exactCenterY();
-        float u = Math.min(w, h);
+        float u = Math.min(w, h);                 // unit of scale
         stroke.setStrokeWidth(u * 0.085f);
         p.reset();
 
@@ -68,10 +72,10 @@ public class Icon extends Drawable {
             case FWD: {
                 float r = u * 0.30f;
                 RectF o = new RectF(cx - r, cy - r, cx + r, cy + r);
-
+                // an arc open at the top
                 float start = (kind == BACK) ? -60f : -120f;
                 cv.drawArc(o, start, 300f, false, stroke);
-
+                // arrowhead
                 float ang = (float) Math.toRadians(start);
                 float tipX = cx + r * (float) Math.cos(ang);
                 float tipY = cy + r * (float) Math.sin(ang);
@@ -132,7 +136,7 @@ public class Icon extends Drawable {
                 break;
             }
             case HEADSET: {
-
+                // headband arc and two cups
                 float r = u * 0.28f;
                 RectF o2 = new RectF(cx - r, cy - r * 0.95f, cx + r, cy + r * 0.75f);
                 cv.drawArc(o2, 190f, 160f, false, stroke);
@@ -152,7 +156,7 @@ public class Icon extends Drawable {
                 break;
             }
             case LOGO: {
-
+                // the same three strokes as the launcher icon
                 float W = u * 0.62f, bw = W / 5f;
                 float[] hs = {0.42f, 0.78f, 0.58f};
                 float x = cx - W / 2f;

@@ -11,21 +11,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Folder listing through the storage access framework: one query, no recursion, no storage
+ * scan.
+ */
 public class Folder {
 
     public static class Item {
         public String docId, name, mime;
         public boolean dir;
         public long size;
-        public long modified;
-        public long duration = -1;
+        public long modified;           // file modification time
+        public long duration = -1;      // -1 = not read yet
     }
 
+    /** MP4 family: extensions. */
     private static final String[] MP4_EXT = {".m4a", ".m4b", ".mp4", ".aac", ".m4p"};
-
+    /** MP4 family: MIME types. */
     private static final String[] MP4_MIME = {"audio/mp4", "audio/x-m4a", "audio/aac",
                                               "audio/mp4a-latm", "video/mp4"};
-
+    /** Everything else that sounds. */
     private static final String[] SND_EXT = {".mp3", ".ogg", ".oga", ".opus", ".flac",
                                              ".wav", ".wma", ".mka", ".mkv", ".webm",
                                              ".3gp", ".amr", ".ape", ".aiff", ".aif"};
@@ -57,10 +62,14 @@ public class Folder {
         }
     }
 
+    /**
+     * Sorts the list. The store is needed for modes whose key lives in our own memory rather
+     * than in the file. Unknown values always go to the tail.
+     */
     public static void sort(List<Item> items, final int mode, final boolean desc, final Store store) {
         Collections.sort(items, new java.util.Comparator<Item>() {
             @Override public int compare(Item a, Item b) {
-
+                // the MP4 family always comes first, whatever the order
                 boolean ma = isMp4(a.name, a.mime), mb = isMp4(b.name, b.mime);
                 if (ma != mb) return ma ? -1 : 1;
                 int r;
@@ -71,7 +80,7 @@ public class Folder {
                         if (pa == 0 && pb == 0) return natural(a.name, b.name);
                         if (pa == 0) return 1;
                         if (pb == 0) return -1;
-                        r = Long.compare(pb, pa);
+                        r = Long.compare(pb, pa);          // most recent first
                         break;
                     }
                     case SORT_DURATION: {
@@ -87,7 +96,7 @@ public class Folder {
                         if (a.modified == 0 && b.modified == 0) return natural(a.name, b.name);
                         if (a.modified == 0) return 1;
                         if (b.modified == 0) return -1;
-                        r = Long.compare(b.modified, a.modified);
+                        r = Long.compare(b.modified, a.modified);   // newest first
                         break;
                     }
                     default:
@@ -98,6 +107,7 @@ public class Folder {
         });
     }
 
+    /** Everything as it is: the filters hide pictures, and the cover search needs them. */
     public static List<Item> listRaw(Context ctx, Uri tree, String parentDocId) {
         List<Item> out = new ArrayList<>();
         Uri kids = DocumentsContract.buildChildDocumentsUriUsingTree(tree, parentDocId);
@@ -121,6 +131,7 @@ public class Folder {
         return out;
     }
 
+    /** Reads a folder. filterMp4 shows only the MP4 family. */
     public static List<Item> list(Context ctx, Uri tree, String parentDocId, boolean filterMp4,
                                   int sortMode, boolean sortDesc, Store store) {
         List<Item> dirs = new ArrayList<>(), files = new ArrayList<>();
@@ -157,6 +168,7 @@ public class Folder {
         return dirs;
     }
 
+    /** Chapter 2 comes before chapter 10. */
     public static int natural(String a, String b) {
         int i = 0, j = 0;
         while (i < a.length() && j < b.length()) {
@@ -179,6 +191,9 @@ public class Folder {
         return (a.length() - i) - (b.length() - j);
     }
 
+    /**
+     * A file can also arrive from outside: then docId is a ready URI with no tree behind it.
+     */
     public static Uri fileUri(Uri tree, String docId) {
         if (docId != null && (docId.startsWith("content://") || docId.startsWith("file://")))
             return Uri.parse(docId);
@@ -190,6 +205,7 @@ public class Folder {
         return DocumentsContract.getTreeDocumentId(tree);
     }
 
+    /** A folder's name by its docId. Empty when the provider does not answer. */
     public static String nameOf(Context ctx, Uri tree, String docId) {
         Cursor c = null;
         try {
@@ -202,7 +218,7 @@ public class Folder {
         } finally {
             if (c != null) try { c.close(); } catch (Exception ignored) {}
         }
-
+        // fallback: the tail after the last separator
         int i = docId.lastIndexOf('/');
         if (i >= 0 && i + 1 < docId.length()) return docId.substring(i + 1);
         i = docId.lastIndexOf(':');

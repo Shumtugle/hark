@@ -8,16 +8,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Per-file positions and settings. The key is the documentId, not the path: a path breaks when
+ * a parent is renamed, an id does not.
+ */
 public class Store {
 
     private static final String POS  = "positions";
     private static final String CFG  = "config";
     private static final int    HISTORY_MAX = 20;
 
+    /** Closer than 15 seconds to the start counts as the start. */
     public static final long EDGE_HEAD = 15_000L;
-
+    /** Closer than 20 seconds to the end means the file is finished. */
     public static final long EDGE_TAIL = 20_000L;
-
+    /** Returning to a file rewinds this much. */
     public static final long REWIND    = 5_000L;
 
     private final SharedPreferences pos, cfg;
@@ -27,14 +32,22 @@ public class Store {
         cfg = c.getSharedPreferences(CFG, Context.MODE_PRIVATE);
     }
 
+    // ---- root and folder ----
+
     public String root()            { return cfg.getString("root_tree", null); }
     public void   root(String uri)  { cfg.edit().putString("root_tree", uri).apply(); }
 
     public String folder()          { return cfg.getString("last_folder", null); }
     public void   folder(String id) { cfg.edit().putString("last_folder", id).apply(); }
 
+    // ---- speed ----
+
     public float speed()            { return cfg.getFloat("speed", 1.0f); }
     public void  speed(float v)     { cfg.edit().putFloat("speed", v).apply(); }
+
+    // ---- inquest ----
+
+    // ---- sort ----
 
     public int  sortMode()          { return cfg.getInt("sort_mode", 0); }
     public void sortMode(int v)     { cfg.edit().putInt("sort_mode", v).apply(); }
@@ -47,14 +60,22 @@ public class Store {
     public int  widgetShade()       { return cfg.getInt("widget_shade", 2); }
     public void widgetShade(int v)  { cfg.edit().putInt("widget_shade", v).apply(); }
 
+    /** Rewind on resume, in milliseconds. Zero resumes exactly where it stopped. */
     public long resumeBack()        { return cfg.getLong("resume_back", 3500L); }
     public void resumeBack(long v)  { cfg.edit().putLong("resume_back", v).apply(); }
+
+    /** Close the player after this long paused, in milliseconds. Zero never closes. */
+    public long idleClose()         { return cfg.getLong("idle_close", 30 * 60_000L); }
+    public void idleClose(long v)   { cfg.edit().putLong("idle_close", v).apply(); }
 
     public boolean rememberFilter()      { return cfg.getBoolean("remember_filter", true); }
     public void    rememberFilter(boolean v) { cfg.edit().putBoolean("remember_filter", v).apply(); }
 
     public boolean filterMp4()      { return cfg.getBoolean("filter_mp4", false); }
     public void    filterMp4(boolean v) { cfg.edit().putBoolean("filter_mp4", v).apply(); }
+
+    // ---- bookmarks ---- Stored as one string: docId\u0001name\u0002docId\u0001name… A
+    // database for a dozen folders would be a luxury.
 
     public static class Mark { public String tree, docId, name; }
 
@@ -89,6 +110,7 @@ public class Store {
         return false;
     }
 
+    /** A bookmark remembers its tree too: the folder may live on a memory card. */
     public void mark(String tree, String docId, String name) {
         java.util.List<Mark> l = marks();
         for (Mark m : l) if (m.docId.equals(docId)) return;
@@ -112,6 +134,8 @@ public class Store {
     public boolean probe()          { return cfg.getBoolean("probe", true); }
     public void    probe(boolean v) { cfg.edit().putBoolean("probe", v).apply(); }
 
+    // ---- last file ----
+
     public String  lastDoc()        { return cfg.getString("last_doc", null); }
     public String  lastName()       { return cfg.getString("last_name", null); }
     public String  lastFolder()     { return cfg.getString("last_doc_folder", null); }
@@ -126,8 +150,10 @@ public class Store {
            .putString("last_name", name)
            .putString("last_doc_folder", folderId)
            .putString("last_doc_folder_name", folderName)
-           .commit();
+           .commit();   // at once: a deferred write would not make it through a crash
     }
+
+    // ---- positions ----
 
     public long lastPlayed(String docId) { return pos.getLong("t_" + docId, 0L); }
 
@@ -135,8 +161,9 @@ public class Store {
     public long duration(String docId) { return pos.getLong("d_" + docId, 0L); }
     public boolean done(String docId)  { return pos.getBoolean("f_" + docId, false); }
 
+    /** Where to resume: with the rewind, minding the edges. */
     public long resumeAt(String docId) {
-        if (done(docId)) return 0L;
+        if (done(docId)) return 0L;          // finished: only from the start
         long p = position(docId);
         long d = duration(docId);
         if (p <= EDGE_HEAD) return 0L;
@@ -144,6 +171,11 @@ public class Store {
         return Math.max(0L, p - REWIND);
     }
 
+    /**
+     * Explicit finished mark. It used to be inferred from the position, and a file that played
+     * to the end in the background could stay unmarked: the last autosave fell just short of
+     * the threshold, and the player does not always report the duration after the end.
+     */
     public void finish(String docId, long d) {
         SharedPreferences.Editor e = pos.edit();
         e.putBoolean("f_" + docId, true);
@@ -153,6 +185,7 @@ public class Store {
         e.commit();
     }
 
+    /** Lift the mark by hand. */
     public void unfinish(String docId) {
         pos.edit().putBoolean("f_" + docId, false).commit();
     }
@@ -164,7 +197,7 @@ public class Store {
         e.putLong("t_" + docId, System.currentTimeMillis());
         if (d > 0 && p >= d - EDGE_TAIL) e.putBoolean("f_" + docId, true);
         else if (p > EDGE_HEAD)          e.putBoolean("f_" + docId, false);
-        e.commit();
+        e.commit();   // the position is the whole point: write it at once
         trim();
     }
 
@@ -175,6 +208,8 @@ public class Store {
                   .putString("fi_" + docId, folderId == null ? "" : folderId)
                   .apply();
     }
+
+    // ---- history ----
 
     public static class Recent {
         public String docId, name, folderId, folderName;
@@ -204,6 +239,7 @@ public class Store {
         return out;
     }
 
+    /** Trims the tail so the settings file does not grow forever. */
     private void trim() {
         Map<String, ?> all = pos.getAll();
         int stamps = 0;

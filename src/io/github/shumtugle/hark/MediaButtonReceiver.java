@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.view.KeyEvent;
 
+/** Headset buttons while the session is not in focus. */
 public class MediaButtonReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context c, Intent i) {
         if (!Intent.ACTION_MEDIA_BUTTON.equals(i.getAction())) return;

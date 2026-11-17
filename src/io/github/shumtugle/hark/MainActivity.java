@@ -32,24 +32,25 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
 
     private boolean filterMp4 = true;
     private boolean full = false;
-    private Folder.Item external = null;
+    private Folder.Item external = null;      // a file handed over from outside
     private boolean pendingExternal = false;
-    private String pendingTarget = null;
+    private String pendingTarget = null;      // what to start once the service is alive
 
+    // header
     private ImageView btnUp, gear;
     private TextView star, batt;
     private ImageView phones;
     private TextView emptyView;
     private int hiddenByFilter;
     private TextView  tvFolder, chip;
-
+    // panel
     private LinearLayout panel;
     private TextView pTitle, pTime, pSpeed, pSleep, scrubHint;
     private ImageView pArt;
     private String artFor;
     private ImageView pBack, pPlay, pFwd;
     private Bar seek;
-
+    // full screen
     private FrameLayout rootFrame;
     private LinearLayout fullView;
     private TextView fTime, fLeft, fTitle, fSpeed, fSleep;
@@ -59,6 +60,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
     private final Handler h = new Handler(Looper.getMainLooper());
     private boolean bound = false;
     private int ticks;
+
+    // ============ lifecycle ============
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
@@ -73,7 +76,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
                 && checkSelfPermission("android.permission.POST_NOTIFICATIONS")
                    != android.content.pm.PackageManager.PERMISSION_GRANTED)
             ask.add("android.permission.POST_NOTIFICATIONS");
-
+        // without it the headset charge is not given out even through reflection
         if (Build.VERSION.SDK_INT >= 31
                 && checkSelfPermission("android.permission.BLUETOOTH_CONNECT")
                    != android.content.pm.PackageManager.PERMISSION_GRANTED)
@@ -82,6 +85,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
 
         if (handleIncoming(getIntent())) return;
 
+        // the previous crash survived the death of the process: report it
         final String crash = Probe.lastCrash(this);
         if (crash != null) {
             Probe.log("recovered from a crash \u2014 stack kept below");
@@ -111,6 +115,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         handleIncoming(i);
     }
 
+    /** A file handed over from outside: Open with, or Share. */
     private boolean handleIncoming(Intent i) {
         if (i == null || i.getAction() == null) return false;
         Uri u = null;
@@ -119,6 +124,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
             u = (Uri) i.getParcelableExtra(Intent.EXTRA_STREAM);
         if (u == null) return false;
 
+        // with a persistent permission the file survives a restart
         try {
             getContentResolver().takePersistableUriPermission(u,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION);
@@ -127,6 +133,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
             Probe.log("external file: permission for this session only");
         }
 
+        // if the file lies inside a tree we can read, open it in its own folder rather than in
+        // a separate mode
         if (tree == null) {
             String saved = store.root();
             if (saved != null) tree = Uri.parse(saved);
@@ -155,6 +163,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         return true;
     }
 
+    /** Tries to find the file inside our tree and open its folder. */
     private boolean adoptIntoTree(Uri u) {
         String rid = Folder.rootId(tree);
         if (rid == null) return false;
@@ -164,7 +173,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         catch (Exception e) { Probe.log("document id unreadable: " + e.getClass().getSimpleName()); }
 
         if (docId == null || !docId.startsWith(rid)) {
-
+            // the file manager handed the file through its own provider: look it up by name
+            // and size
             String want = queryName(u);
             long size = querySize(u);
             String found = findInTree(rid, want, size, 0);
@@ -179,12 +189,13 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         final String parent = (cut > rid.length() - 1) ? docId.substring(0, cut) : rid;
         final String target = docId;
 
+        // if the filter would hide this file, lift it
         String nm = queryName(u);
         if (!Folder.isMp4(nm, getContentResolver().getType(u))) {
             filterMp4 = false;
             paintChip();
         }
-
+        // rebuild the path: the root, then the file's folder
         pathIds.clear(); pathNames.clear();
         pathIds.add(rid);
         pathNames.add(Folder.nameOf(this, tree, rid));
@@ -230,6 +241,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         return 0;
     }
 
+    /** Depth-first walk of the tree, three levels deep: match by name first, then by size. */
     private String findInTree(String parent, String name, long size, int depth) {
         if (name == null || depth > 3) return null;
         List<Folder.Item> items = Folder.list(this, tree, parent, false,
@@ -279,6 +291,12 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         h.post(tick);
     }
 
+    /**
+     * While the screen was in the background the service may have moved to the next file, and
+     * nobody was there to hear about it. On return, the marker is reconciled with what is
+     * actually playing.
+     */
+    /** Headset and its charge. Checked on return and every few seconds. */
     private void paintPhones() {
         if (phones == null) return;
         Audio.Out o = Audio.current(this);
@@ -287,7 +305,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         phones.setImageDrawable(new Icon(Icon.HEADSET, o.bluetooth ? Ui.ACCENT : Ui.TEXT_2));
         String l = Audio.label(o);
         if (l.isEmpty()) {
-
+            // no charge reported: hide the mark too, it would promise data that is not coming
             batt.setVisibility(View.GONE);
             phones.setVisibility(View.GONE);
         }
@@ -343,6 +361,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
 
     @Override public void onPlayerChanged() { refreshPanel(); refreshList(); }
 
+    // ============ permission and folder ============
+
     public void pickFolder() {
         Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -375,6 +395,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
                     Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (Exception e) { Probe.log("takePersistableUriPermission failed: " + e.getMessage()); }
 
+        // The previous tree is NOT released: bookmarks may depend on it. Android keeps more
+        // than a hundred persistent grants, plenty for us.
         tree = picked;
         store.root(picked.toString());
         pathIds.clear(); pathNames.clear();
@@ -415,12 +437,14 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
     private String folderId()   { return pathIds.isEmpty() ? null : pathIds.get(pathIds.size() - 1); }
     private String folderName() { return pathNames.isEmpty() ? "" : pathNames.get(pathNames.size() - 1); }
 
+    /** Choosing the same mode again reverses the order. */
     public void setSort(int mode) {
         if (store.sortMode() == mode) store.sortDesc(!store.sortDesc());
         else { store.sortMode(mode); store.sortDesc(false); }
         refreshList();
     }
 
+    /** Whether the grant a bookmark depends on is still alive. */
     public boolean markUsable(Store.Mark m) {
         if (m.tree == null) return true;
         try { return stillPermitted(Uri.parse(m.tree)); } catch (Exception e) { return false; }
@@ -432,6 +456,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
     public String folderNamePublic() { return folderName(); }
     public void   refreshChips()     { buildChips(); }
 
+    /** Jump to a bookmark: the path is rebuilt from the root. */
     public void openMark(Store.Mark m) {
         if (tree == null || m == null || m.docId == null) {
             Probe.log("bookmark empty or no tree");
@@ -440,6 +465,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         Probe.log("jumping to bookmark: " + m.name + "  id=" + m.docId
                 + "  дерево=" + (m.tree == null ? "то же" : m.tree));
 
+        // a bookmark may live on another volume, a memory card for one
         if (m.tree != null && !m.tree.equals(tree.toString())) {
             Uri other = Uri.parse(m.tree);
             if (!stillPermitted(other)) {
@@ -459,6 +485,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         if (!m.docId.equals(rid)) { pathIds.add(m.docId); pathNames.add(m.name); }
         store.folder(m.docId);
 
+        // loaded right here rather than through the shared path, so the inquest shows how much
+        // arrived and whether anything did
         final String fid = m.docId;
         final String fname = m.name;
         final boolean f = filterMp4;
@@ -483,6 +511,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
     public Uri tree()   { return tree; }
     public Store store(){ return store; }
 
+    // ============ list ============
+
     public void refreshList() {
         if (external != null) { rows.notifyDataSetChanged(); return; }
         if (tree == null || folderId() == null) return;
@@ -491,7 +521,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         new Thread(new Runnable() { @Override public void run() {
             final List<Folder.Item> items = Folder.list(MainActivity.this, tree, fid, f,
                     store.sortMode(), store.sortDesc(), store);
-
+            // if the filter ate everything, we need to know whether there was anything to eat
             int hidden = 0;
             if (f) {
                 int all = 0, shown = 0;
@@ -521,6 +551,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         }}).start();
     }
 
+    /** An empty list has to say why it is empty. */
     private void paintEmpty() {
         if (emptyView == null || rows == null) return;
         if (rows.getCount() > 0) { emptyView.setVisibility(View.GONE); return; }
@@ -535,10 +566,13 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         }
     }
 
+    /** The Continue row. The file is checked for existence first. */
     private Rows.Cont buildCont(List<Folder.Item> items, String fid) {
         String doc = store.lastDoc();
         if (doc == null) return null;
 
+        // The file may live on another volume: checking it inside a foreign tree is pointless,
+        // and wiping its position would be a loss.
         String lt = store.lastTree();
         if (lt != null && tree != null && !lt.equals(tree.toString())) return null;
 
@@ -553,6 +587,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         long dur = store.duration(doc);
         if (dur > 0 && pos >= dur - Store.EDGE_TAIL) return null;
 
+        // already playing and visible in the list: the row would be redundant
         PlayerService s = PlayerService.get();
         if (s != null && s.isPlaying()) {
             Folder.Item c = s.current();
@@ -580,6 +615,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
             return false;
         } finally { if (c != null) try { c.close(); } catch (Exception ignored) {} }
     }
+
+    // ============ actions ============
 
     private void onRowTap(int i) {
         Object o = rows.getItem(i);
@@ -646,6 +683,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         else startDoc(r.docId);
     }
 
+    /** The report: sections separated by blank lines, the log at the bottom. */
     public String probeReport() {
         StringBuilder L = new StringBuilder();
 
@@ -729,6 +767,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
 
     private void toast(String s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
 
+    // ============ panel ============
+
     public void refreshPanel() {
         PlayerService s = PlayerService.get();
         Folder.Item it = (s == null) ? null : s.current();
@@ -777,6 +817,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         }
     }
 
+    /** Cover art is read off the main thread: metadata is too slow for it. */
     private void loadArt(final Folder.Item it) {
         if (it == null) { pArt.setVisibility(View.GONE); artFor = null; return; }
         if (it.docId.equals(artFor)) return;
@@ -799,10 +840,12 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         @Override public void run() {
             PlayerService s = PlayerService.get();
             if (s != null && s.isPlaying()) refreshPanel();
-            if (++ticks % 20 == 0) paintPhones();
+            if (++ticks % 20 == 0) paintPhones();   // every ten seconds, no need for more
             h.postDelayed(this, 500);
         }
     };
+
+    // ============ building the screen ============
 
     private void buildUi() {
         getWindow().setStatusBarColor(Ui.SURFACE);
@@ -881,6 +924,10 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         setContentView(rootFrame);
     }
 
+    /**
+     * One-line header: arrow, folder name, filter, bookmarks, logo. Everything else lives
+     * behind the logo.
+     */
     private View buildHeader() {
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -926,6 +973,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         head.addView(chip);
         paintChip();
 
+        // the headset mark appears only when a headset is there
         phones = new ImageView(this);
         phones.setImageDrawable(new Icon(Icon.HEADSET, Ui.ACCENT));
         int hs = Ui.dp(this, 24);
@@ -960,6 +1008,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         return head;
     }
 
+    /** The star lights up when the current folder is bookmarked. */
     private void buildChips() {
         if (star == null) return;
         boolean lit = folderId() != null && store.marked(folderId());
@@ -1057,6 +1106,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         });
         ctrl.addView(pSpeed);
 
+        // the buttons live in their own box, stretched over the rest of the row
         LinearLayout mid = new LinearLayout(this);
         mid.setOrientation(LinearLayout.HORIZONTAL);
         mid.setGravity(Gravity.CENTER);
@@ -1080,6 +1130,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
 
         panel.addView(ctrl);
 
+        // the content shrinks to the left, the cover holds the right edge
         LinearLayout wrap = new LinearLayout(this);
         wrap.setOrientation(LinearLayout.HORIZONTAL);
         wrap.setGravity(Gravity.CENTER_VERTICAL);
@@ -1139,6 +1190,12 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         refreshPanel();
     }
 
+    /**
+     * The bar is drawn across the full width, but the gesture is pulled in by a sixth on each
+     * side: a finger cannot reach the very edge through a case, and the start and end of a
+     * recording are what is needed most often. Beyond that sixth the value clamps to zero and
+     * one, so the edges still work.
+     */
     private static float scrubFrac(float x, int width) {
         float w = Math.max(1, width);
         float inset = w / 6f;
@@ -1146,6 +1203,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         return f < 0 ? 0 : (f > 1 ? 1 : f);
     }
 
+    /** Dragging is caught over the whole height of the panel, not on the two-pixel thread. */
     private void attachScrub(View zone, final Bar bar, final boolean big) {
         zone.setOnTouchListener(new View.OnTouchListener() {
             boolean dragging = false;
@@ -1177,7 +1235,7 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
                             s.seekTo((long) (f * s.duration()));
                             refreshPanel();
                         } else if (big) {
-
+                            // in full screen a tap on the bar seeks too
                             s.seekTo((long) (f * s.duration()));
                             refreshPanel();
                         } else v.performClick();
@@ -1188,6 +1246,8 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
             }
         });
     }
+
+    // ============ full screen ============
 
     private void buildFull() {
         fullView = new LinearLayout(this);
@@ -1277,6 +1337,9 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         if (on) refreshPanel();
     }
 
+    // ============ navigation ============
+
+    /** Back from the outside-file mode to the ordinary list. */
     private void leaveExternal() {
         external = null;
         if (tree == null) {
@@ -1301,6 +1364,6 @@ public class MainActivity extends Activity implements PlayerService.Watcher {
         if (full) { showFull(false); return; }
         if (external != null) { leaveExternal(); return; }
         if (pathIds.size() > 1) { up(); return; }
-        moveTaskToBack(true);
+        moveTaskToBack(true);          // playback is not killed
     }
 }

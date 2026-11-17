@@ -12,6 +12,10 @@ import android.view.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Playback lives here and outlives the activity. The position is written every few seconds and
+ * on every pause.
+ */
 public class PlayerService extends Service
         implements MediaPlayer.OnCompletionListener, MediaPlayer.OnErrorListener {
 
@@ -24,6 +28,8 @@ public class PlayerService extends Service
     public static final String ACT_PREV   = "io.github.shumtugle.hark.PREV";
     public static final String ACT_STOP   = "io.github.shumtugle.hark.STOP";
     public static final String ACT_FORGET = "io.github.shumtugle.hark.FORGET";
+    /** Delivered by an alarm to the widget receiver, which asks a live service to check. */
+    public static final String ACT_IDLE   = "io.github.shumtugle.hark.IDLE";
 
     public static final long BACK_MS = 15_000L;
     public static final long FWD_MS  = 30_000L;
@@ -43,7 +49,7 @@ public class PlayerService extends Service
     private MediaPlayer mp;
     private MediaSession session;
     private AudioManager am;
-    private Object focusRequest;
+    private Object focusRequest;                 // an audio focus request on API 26+
     private Store store;
     private Watcher watcher;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -60,9 +66,11 @@ public class PlayerService extends Service
     private boolean foreground = false;
     private boolean resumingFromPause = false;
 
-    private long sleepAtMs = 0;
+    private long sleepAtMs = 0;                  // 0 = no timer
     private boolean sleepAtEnd = false;
     private float volume = 1f;
+
+    // ---------- lifecycle ----------
 
     @Override public void onCreate() {
         super.onCreate();
@@ -100,8 +108,15 @@ public class PlayerService extends Service
     }
 
     @Override public int onStartCommand(Intent i, int flags, int startId) {
+        // We may have been raised from the home screen: the system allows five seconds to
+        // enter the foreground, so the notification goes up at once, before we know what to
+        // play. A plain start from our own screen carries no action and needs no
+        // notification: otherwise merely opening the app left a nameless one behind for good.
+        if (i != null && i.getAction() != null) ensureForeground();
 
-        ensureForeground();
+        // A restart by the system after the process was killed: nobody asked for anything,
+        // and an idle background service has no business coming back.
+        if (i == null && !isPlaying()) { stopSelf(); return START_NOT_STICKY; }
 
         if (i != null && i.getAction() != null) {
             String act = i.getAction();
@@ -129,6 +144,7 @@ public class PlayerService extends Service
 
     @Override public IBinder onBind(Intent i) { return binder; }
 
+    /** A placeholder notification, so as not to be killed for silence in the first seconds. */
     private void ensureForeground() {
         if (foreground) return;
         try {
@@ -143,13 +159,16 @@ public class PlayerService extends Service
         }
     }
 
+    /**
+     * The service may have been killed while paused. Then the queue is empty while someone
+     * presses a widget button: raise the last file from storage.
+     */
     private void restoreLast(final String action) {
         final String root = store.root();
         final String docId = store.lastDoc();
         final String folder = store.lastFolder();
         if (root == null || docId == null) {
-            Probe.log("nothing to restore");
-            changed();
+            shutDown("nothing to restore");
             return;
         }
         Probe.log("rising after death: " + store.lastName());
@@ -168,7 +187,14 @@ public class PlayerService extends Service
         }}).start();
     }
 
+    /** Swiped away from the recent apps while paused: nothing is left to keep alive. */
+    @Override public void onTaskRemoved(Intent root) {
+        if (!isPlaying()) shutDown("task removed while paused");
+        super.onTaskRemoved(root);
+    }
+
     @Override public void onDestroy() {
+        cancelIdle();
         saveNow();
         ui.removeCallbacks(ticker);
         unregisterNoisy();
@@ -176,10 +202,16 @@ public class PlayerService extends Service
         if (mp != null) { try { mp.release(); } catch (Exception ignored) {} mp = null; }
         if (session != null) { session.setActive(false); session.release(); session = null; }
         live = null;
+        Widget.push(this);      // the widget now draws the last state from storage
         super.onDestroy();
     }
 
-    public void watch(Watcher w) { watcher = w; }
+    public void watch(Watcher w) {
+        watcher = w;
+        // Our screen went away with nothing playing: start the idle countdown from here, or a
+        // file opened and never started would keep the notification alive.
+        if (w == null && !isPlaying() && idleSince == 0L) scheduleIdle();
+    }
     private void changed() {
         Widget.push(this);
         if (watcher == null) return;
@@ -187,6 +219,8 @@ public class PlayerService extends Service
             @Override public void run() { if (watcher != null) watcher.onPlayerChanged(); }
         });
     }
+
+    // ---------- queue ----------
 
     public void setQueue(Uri tree, String folderId, String folderName, List<Folder.Item> items) {
         this.tree = tree; this.folderId = folderId; this.folderName = folderName;
@@ -202,6 +236,7 @@ public class PlayerService extends Service
     public String folderId()   { return folderId; }
     public boolean hasQueue()  { return !queue.isEmpty(); }
 
+    /** Loads a file. start=false only prepares it and seeks to the saved position. */
     public void open(String docId, boolean start) {
         int at = -1;
         for (int i = 0; i < queue.size(); i++) if (queue.get(i).docId.equals(docId)) { at = i; break; }
@@ -251,13 +286,20 @@ public class PlayerService extends Service
         changed();
     }
 
+    // ---------- controls ----------
+
     public void toggle() { if (isPlaying()) pause(true); else play(); }
 
     public void play() {
         if (mp == null || !prepared) { wantPlay = true; return; }
         if (!takeFocus()) { Probe.log("audio focus refused"); return; }
         registerNoisy();
+        cancelIdle();
+        if (session != null && !session.isActive()) session.setActive(true);
 
+        // Made for speech: a pause cuts a thought mid-sentence, and resuming from the exact
+        // same spot is useless. A small rewind brings back the end of the phrase, and the
+        // sense with it.
         if (resumingFromPause) {
             resumingFromPause = false;
             long back = store.resumeBack();
@@ -275,7 +317,8 @@ public class PlayerService extends Service
                 final int token = ++kickToken;
                 ui.postDelayed(new Runnable() {
                     @Override public void run() {
-
+                        // Same start, same file: otherwise someone else has already set the
+                        // speed, and there is no reason to interfere.
                         if (token == kickToken) applySpeedSafely();
                     }
                 }, KICK_MS);
@@ -290,6 +333,7 @@ public class PlayerService extends Service
         changed();
     }
 
+    /** byUser=true: the pause is final and will not resume by itself. */
     public void pause(boolean byUser) {
         kickToken++;
         if (mp != null && prepared) {
@@ -301,6 +345,7 @@ public class PlayerService extends Service
         unregisterNoisy();
         saveNow();
         pushNote();
+        scheduleIdle();
         changed();
     }
 
@@ -348,6 +393,20 @@ public class PlayerService extends Service
         changed();
     }
 
+    /**
+     * On some devices setting playback params on a paused player starts the sound by itself.
+     * So: remember the state, set, restore.
+     */
+    /*
+     * Silent long AAC. On some phones the system player hands long AAC to the audio processor,
+     * which plays silence: the clock runs, no sound comes. Starting at any speed other than
+     * 1.0 turns that offload off. So AAC at speed 1 starts at 0.99x and gets its own speed
+     * back a second later. It is done on every start, not once per file: nobody knows whether
+     * the system gives the file back to the processor after a pause.
+     *
+     * Mp3 is left alone: for it the offload is honest battery saving over a long listen. Any
+     * speed other than 1 is left alone too: it turns the offload off by itself.
+     */
     private static final float KICK_SPEED = 0.99f;
     private static final long  KICK_MS = 1000L;
     private int kickToken = 0;
@@ -359,6 +418,7 @@ public class PlayerService extends Service
         return Folder.isMp4(it.name, it.mime);
     }
 
+    /** Speed without restoring the pause: called right before start(). */
     private void setSpeedRaw(float v) {
         try {
             PlaybackParams pp = mp.getPlaybackParams();
@@ -400,17 +460,98 @@ public class PlayerService extends Service
         try { return (mp != null && prepared) ? mp.getDuration() : 0L; } catch (Exception e) { return 0L; }
     }
 
-    private void stopEverything() {
-        pause(true);
+    private void stopEverything() { shutDown("closed by hand"); }
+
+    // ---------- closing ----------
+
+    /*
+     * A paused player used to stay in the foreground forever: the notification and the lock
+     * screen card lived for days, holding on to a file nobody was listening to. Now a pause
+     * arms an alarm, and when it fires with nothing playing the service saves the position,
+     * drops its session and notification, and stops. The widget keeps working: it draws the
+     * last state from storage and wakes the player on a tap.
+     *
+     * An alarm rather than a handler: handler time stands still while the phone sleeps, so a
+     * thirty-minute delay could take days to arrive.
+     */
+    private long idleSince = 0L;
+
+    private PendingIntent idleIntent() {
+        Intent i = new Intent(this, Widget.class).setAction(ACT_IDLE);
+        return PendingIntent.getBroadcast(this, 93, i,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private void scheduleIdle() {
+        long ms = store.idleClose();
+        cancelIdle();
+        if (ms <= 0) return;
+        idleSince = System.currentTimeMillis();
+        armIdle(ms);
+    }
+
+    private void armIdle(long ms) {
+        try {
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (am != null) am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                    System.currentTimeMillis() + ms, idleIntent());
+        } catch (Exception e) {
+            Probe.log("idle alarm refused: " + e.getClass().getSimpleName());
+        }
+    }
+
+    private void cancelIdle() {
+        idleSince = 0L;
+        try {
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (am != null) am.cancel(idleIntent());
+        } catch (Exception ignored) {}
+    }
+
+    /** The alarm went off: close if still idle, otherwise wait for the rest of the delay. */
+    public void idleCheck() {
+        long ms = store.idleClose();
+        if (ms <= 0 || isPlaying() || idleSince == 0L) { cancelIdle(); return; }
+        if (watcher != null) { armIdle(ms); return; }   // our screen is open: not idle
+        long left = idleSince + ms - System.currentTimeMillis();
+        if (left > 60_000L) { armIdle(left); return; }  // inexact alarms may fire early
+        shutDown("idle for " + (ms / 60_000L) + " min");
+    }
+
+    /** Closes the player completely: position saved, session and notification gone. */
+    public void shutDown(String why) {
+        Probe.log("closing: " + why);
+        cancelIdle();
+        if (isPlaying()) pause(true);
+        saveNow();
+        cancelIdle();
+        kickToken++;
+        unregisterNoisy();
+        dropFocus();
         foreground = false;
-        stopForeground(true);
+        try { stopForeground(STOP_FOREGROUND_REMOVE); } catch (Exception ignored) {}
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) nm.cancel(NOTE_ID);
+        } catch (Exception ignored) {}
+        // The session goes quiet now, not at destruction: our screen may still be bound, and the
+        // lock screen card lives exactly as long as the session is active.
+        if (session != null) { try { session.setActive(false); } catch (Exception ignored) {} }
+        if (mp != null) { try { mp.release(); } catch (Exception ignored) {} mp = null; }
+        prepared = false;
+        queue.clear();
+        index = -1;
+        changed();
         stopSelf();
     }
+
+    // ---------- end of file ----------
 
     @Override public void onCompletion(MediaPlayer p) {
         Folder.Item it = current();
         if (it != null) {
-
+            // The duration is taken from whichever source knows it: the player itself does not
+            // always report it after the end.
             long d = duration();
             if (d <= 0) d = it.duration;
             if (d <= 0) d = store.duration(it.docId);
@@ -425,7 +566,7 @@ public class PlayerService extends Service
     @Override public boolean onError(MediaPlayer p, int what, int extra) {
         Probe.log("MediaPlayer error what=" + what + " extra=" + extra);
         prepared = false;
-
+        // do not freeze: if the file is broken or gone, move to the next one
         if (wantPlay && index + 1 < queue.size()) {
             Probe.log("skipping the file, moving to the next");
             ui.postDelayed(new Runnable() {
@@ -434,6 +575,8 @@ public class PlayerService extends Service
         } else changed();
         return true;
     }
+
+    // ---------- audio focus ----------
 
     private final AudioManager.OnAudioFocusChangeListener focusListener =
             new AudioManager.OnAudioFocusChangeListener() {
@@ -491,11 +634,13 @@ public class PlayerService extends Service
         } catch (Exception ignored) {}
     }
 
+    // ---------- headphones ----------
+
     private final BroadcastReceiver noisy = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             if (AudioManager.ACTION_AUDIO_BECOMING_NOISY.equals(i.getAction())) {
                 Probe.log("headphones pulled, pausing");
-                pause(true);
+                pause(true);      // resuming is manual only
             }
         }
     };
@@ -512,6 +657,8 @@ public class PlayerService extends Service
         noisyRegistered = false;
     }
 
+    // ---------- sleep timer ----------
+
     public void sleepIn(long ms) {
         sleepAtEnd = false;
         sleepAtMs = (ms <= 0) ? 0 : System.currentTimeMillis() + ms;
@@ -524,6 +671,8 @@ public class PlayerService extends Service
                                      changed(); }
     public long sleepLeft()        { return sleepAtMs == 0 ? 0 : Math.max(0, sleepAtMs - System.currentTimeMillis()); }
     public boolean sleepTilEnd()   { return sleepAtEnd; }
+
+    // ---------- ticker ----------
 
     private final Runnable ticker = new Runnable() {
         @Override public void run() {
@@ -551,6 +700,8 @@ public class PlayerService extends Service
         if (d > 0) store.save(it.docId, p, d);
         Widget.push(this);
     }
+
+    // ---------- notification ----------
 
     private void makeChannel() {
         if (Build.VERSION.SDK_INT < 26) return;
@@ -595,8 +746,10 @@ public class PlayerService extends Service
          .setVisibility(Notification.VISIBILITY_PUBLIC);
 
         b.addAction(R.drawable.ic_note, "−15", pi(ACT_BACK));
-        b.addAction(R.drawable.ic_note, playing ? "Пауза" : "Играть", pi(ACT_TOGGLE));
+        b.addAction(R.drawable.ic_note, playing ? "\u275A\u275A" : "\u25B6", pi(ACT_TOGGLE));
         b.addAction(R.drawable.ic_note, "+30", pi(ACT_FWD));
+        // The fourth action shows in the expanded notification: a way out from anywhere.
+        b.addAction(R.drawable.ic_note, "\u2715  " + I18n.t(I18n.CLOSE), pi(ACT_STOP));
         if (!playing) b.setDeleteIntent(pi(ACT_STOP));
 
         Notification.MediaStyle st = new Notification.MediaStyle()
@@ -604,6 +757,7 @@ public class PlayerService extends Service
         if (session != null) st.setMediaSession(session.getSessionToken());
         b.setStyle(st);
 
+        // state for the lock screen and watches
         if (session != null) {
             PlaybackState.Builder ps = new PlaybackState.Builder()
                     .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
@@ -621,7 +775,8 @@ public class PlayerService extends Service
         }
 
         Notification n = b.build();
-
+        // Stay in the foreground while loaded, paused included. Otherwise the system kills the
+        // service, the widget goes on showing its picture, and its buttons hit nothing.
         startForeground(NOTE_ID, n);
         foreground = true;
     }
